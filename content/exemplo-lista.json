@@ -1,0 +1,25 @@
+{
+  "formato": "lista",
+  "tag": "Tema",
+  "hook1": "Gancho linha 1",
+  "hook2": "linha 2 (vermelha)",
+  "hookSub": "salva pra não esquecer ↓",
+  "items": [
+    {
+      "badge": "Ctrl + ?",
+      "text": "O que esse item faz"
+    },
+    {
+      "badge": "",
+      "text": "badge vazio vira número"
+    },
+    {
+      "badge": "F2",
+      "text": "De 3 a 7 itens"
+    }
+  ],
+  "ctaTitle": "Pergunta de fechamento?",
+  "ctaSub": "Comenta aí e salva o post.",
+  "handleSub": "tech · produtividade · IA",
+  "grid": "cells"
+}

@@ -4,3 +4,10 @@ out-com-musica/
 .env
 tools/*
 !tools/.gitkeep
+
+# Conteudo de producao: mantem apenas exemplos de cada formato como modelo.
+content/*
+!content/exemplo-lista.json
+!content/exemplo-quiz.json
+!content/exemplo-historia.json
+!content/exemplo-custom.json

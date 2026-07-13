@@ -1,0 +1,24 @@
+{
+  "formato": "quiz",
+  "tag": "Quiz",
+  "hook1": "VOCÊ SABIA?",
+  "hookSub": "Teste rápido",
+  "question": "Pergunta em até\ntrês linhas\nde ~24 chars?",
+  "options": [
+    {
+      "text": "Opção A",
+      "correct": false
+    },
+    {
+      "text": "Opção B",
+      "correct": true
+    },
+    {
+      "text": "Opção C",
+      "correct": false
+    }
+  ],
+  "reveal": "Explicação curta da resposta.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA"
+}

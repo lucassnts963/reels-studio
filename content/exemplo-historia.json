@@ -1,0 +1,38 @@
+{
+  "formato": "historia",
+  "tag": "Case",
+  "hook": {
+    "line1": "Linha um",
+    "line2": "linha dois.",
+    "punch": "Punch em vermelho."
+  },
+  "sections": [
+    {
+      "eyebrow": "// O problema",
+      "title": "Título da seção\nem até 3 linhas.",
+      "body": "linha de apoio.",
+      "punch": "Punch da seção."
+    },
+    {
+      "eyebrow": "// Resultado",
+      "widget": {
+        "type": "stats",
+        "rows": [
+          [
+            "Nº",
+            "descrição"
+          ],
+          [
+            "Nº",
+            "descrição"
+          ]
+        ]
+      }
+    }
+  ],
+  "cta": {
+    "top": "linha mono em cima",
+    "title": "fechamento forte\nem duas linhas."
+  },
+  "handleSub": "tech · produtividade · IA"
+}
