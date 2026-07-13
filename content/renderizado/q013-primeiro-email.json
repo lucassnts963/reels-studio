@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Quiz · História",
+  "hook1": "VOCÊ SABIA?",
+  "hookSub": "Quiz de história tech",
+  "question": "Quem escolheu o @\npara o e-mail?",
+  "options": [
+    {
+      "text": "Steve Wozniak",
+      "correct": false
+    },
+    {
+      "text": "A IBM",
+      "correct": false
+    },
+    {
+      "text": "Ray Tomlinson",
+      "correct": true
+    }
+  ],
+  "reveal": "Tomlinson, em 1971.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://en.wikipedia.org/wiki/Ray_Tomlinson",
+  "dificuldade": "",
+  "agenda": {
+    "dia": 1,
+    "hora": 12
+  },
+  "yt": {
+    "titulo": "Quem inventou o @ do e-mail? 📧 #Shorts",
+    "descricao": "Quiz rápido de tecnologia: Quem escolheu o @ para o e-mail? Comenta se acertou e manda pra aquele amigo que se acha expert! 👇\n\n#quiz #tecnologia #curiosidades",
+    "tags": "quiz,tecnologia,curiosidades,você sabia,quiz de tecnologia,shorts,historia da computacao,retro,computadores antigos"
+  }
+}

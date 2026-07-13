@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Inteligência Art.",
+  "hook1": "QUAL ANO?",
+  "hookSub": "Evolução da IA",
+  "question": "Em que ano surgiu\no\nmodelo Watson?",
+  "options": [
+    {
+      "text": "2011",
+      "correct": true
+    },
+    {
+      "text": "2010",
+      "correct": false
+    },
+    {
+      "text": "2013",
+      "correct": false
+    }
+  ],
+  "reveal": "Foi lançado em 2011.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Inteligência_artificial",
+  "dificuldade": "dificil",
+  "agenda": {
+    "dia": 24,
+    "hora": 17
+  },
+  "yt": {
+    "titulo": "Qual Ano?: Em que ano surgiu o modelo Watson? #Shorts",
+    "descricao": "Desafio de Inteligência Art.! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #inteligênciaart.",
+    "tags": "quiz,tecnologia,curiosidades,inteligênciaart.,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "História Tech",
+  "hook1": "ANO EXATO",
+  "hookSub": "Viagem no tempo",
+  "question": "Em que ano surgiu\no(a)\nGoogle?",
+  "options": [
+    {
+      "text": "1998",
+      "correct": true
+    },
+    {
+      "text": "2003",
+      "correct": false
+    },
+    {
+      "text": "1995",
+      "correct": false
+    }
+  ],
+  "reveal": "Surgiu no ano de 1998.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/História_da_computação",
+  "dificuldade": "dificil",
+  "agenda": {
+    "dia": 15,
+    "hora": 0
+  },
+  "yt": {
+    "titulo": "Ano Exato: Em que ano surgiu o(a) Google? #Shorts",
+    "descricao": "Desafio de História Tech! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #históriatech",
+    "tags": "quiz,tecnologia,curiosidades,históriatech,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

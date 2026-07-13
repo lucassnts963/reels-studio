@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "QUAL É?",
+  "hookSub": "Teste de Atalho",
+  "question": "O atalho Ctrl + P\n\nserve para quê\nno\nExcel?",
+  "options": [
+    {
+      "text": "Apagar tudo",
+      "correct": false
+    },
+    {
+      "text": "Travar célula",
+      "correct": false
+    },
+    {
+      "text": "Imprimir",
+      "correct": true
+    }
+  ],
+  "reveal": "Serve para imprimir.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 29,
+    "hora": 11
+  },
+  "yt": {
+    "titulo": "Qual É?: O atalho Ctrl + P serve para quê no Excel? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

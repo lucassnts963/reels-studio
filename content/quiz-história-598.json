@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "História",
+  "hook1": "CURIOSIDADE",
+  "hookSub": "Mundo Tech",
+  "question": "Qual a resposta para\n\nprimeiro bug?",
+  "options": [
+    {
+      "text": "Um erro de C",
+      "correct": false
+    },
+    {
+      "text": "Uma mariposa",
+      "correct": true
+    },
+    {
+      "text": "Um rato",
+      "correct": false
+    }
+  ],
+  "reveal": "Resposta: Uma mariposa.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Informática",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 25,
+    "hora": 21
+  },
+  "yt": {
+    "titulo": "Curiosidade: Qual a resposta para primeiro bug? #Shorts",
+    "descricao": "Desafio de História! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #história",
+    "tags": "quiz,tecnologia,curiosidades,história,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

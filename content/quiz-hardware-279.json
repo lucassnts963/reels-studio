@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Hardware",
+  "hook1": "SIGLAS TECH",
+  "hookSub": "O que significa?",
+  "question": "O que significa\na\nsigla RAM?",
+  "options": [
+    {
+      "text": "Acesso Aleatório",
+      "correct": true
+    },
+    {
+      "text": "Somente Leitura",
+      "correct": false
+    },
+    {
+      "text": "Acesso Rápido",
+      "correct": false
+    }
+  ],
+  "reveal": "RAM = Acesso Aleatório.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Glossário_de_informática",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 12,
+    "hora": 14
+  },
+  "yt": {
+    "titulo": "Siglas Tech: O que significa a sigla RAM? #Shorts",
+    "descricao": "Desafio de Hardware! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #hardware",
+    "tags": "quiz,tecnologia,curiosidades,hardware,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

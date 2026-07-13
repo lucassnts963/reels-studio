@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "História",
+  "hook1": "CURIOSIDADE",
+  "hookSub": "Mundo Tech",
+  "question": "Qual a resposta para\n\npai da computação?",
+  "options": [
+    {
+      "text": "Steve Jobs",
+      "correct": false
+    },
+    {
+      "text": "Bill Gates",
+      "correct": false
+    },
+    {
+      "text": "Alan Turing",
+      "correct": true
+    }
+  ],
+  "reveal": "Resposta: Alan Turing.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Informática",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 10,
+    "hora": 1
+  },
+  "yt": {
+    "titulo": "Curiosidade: Qual a resposta para pai da computação? #Shorts",
+    "descricao": "Desafio de História! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #história",
+    "tags": "quiz,tecnologia,curiosidades,história,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

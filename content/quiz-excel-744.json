@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "TESTE RÁPIDO",
+  "hookSub": "Acerte a função",
+  "question": "No Excel, o que faz\na\nfunção SOMA?",
+  "options": [
+    {
+      "text": "Somar valores",
+      "correct": true
+    },
+    {
+      "text": "Da erro",
+      "correct": false
+    },
+    {
+      "text": "Copia dados",
+      "correct": false
+    }
+  ],
+  "reveal": "É usada para somar valores",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 31,
+    "hora": 23
+  },
+  "yt": {
+    "titulo": "Teste Rápido: No Excel, o que faz a função SOMA? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

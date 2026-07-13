@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Windows",
+  "hook1": "DUVIDO ACERTAR",
+  "hookSub": "Sabe essa de Windows?",
+  "question": "O que o atalho\n\nCtrl+Shift+Esc faz no\n\nWindows?",
+  "options": [
+    {
+      "text": "Abre a Lupa",
+      "correct": false
+    },
+    {
+      "text": "Desliga o PC",
+      "correct": false
+    },
+    {
+      "text": "Gerenciador",
+      "correct": true
+    }
+  ],
+  "reveal": "Ele faz: gerenciador.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/windows",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 6,
+    "hora": 6
+  },
+  "yt": {
+    "titulo": "Duvido Acertar: O que o atalho Ctrl+Shift+Esc faz no Windows? #Shorts",
+    "descricao": "Desafio de Windows! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #windows",
+    "tags": "quiz,tecnologia,curiosidades,windows,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

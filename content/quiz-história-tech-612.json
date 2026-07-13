@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "História Tech",
+  "hook1": "SABE ESSA?",
+  "hookSub": "Invenções",
+  "question": "O que Linus Torvalds\n\najudou a criar?",
+  "options": [
+    {
+      "text": "O primeiro PC",
+      "correct": false
+    },
+    {
+      "text": "A internet",
+      "correct": false
+    },
+    {
+      "text": "Linux",
+      "correct": true
+    }
+  ],
+  "reveal": "Foi o(a) Linux.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/História_da_computação",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 26,
+    "hora": 11
+  },
+  "yt": {
+    "titulo": "Sabe Essa?: O que Linus Torvalds ajudou a criar? #Shorts",
+    "descricao": "Desafio de História Tech! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #históriatech",
+    "tags": "quiz,tecnologia,curiosidades,históriatech,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

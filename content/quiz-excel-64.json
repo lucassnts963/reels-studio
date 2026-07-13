@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "ATALHOS",
+  "hookSub": "Ganhe tempo no Excel",
+  "question": "Qual atalho para\n\nsalvar como no\nExcel?",
+  "options": [
+    {
+      "text": "F5",
+      "correct": false
+    },
+    {
+      "text": "F10",
+      "correct": false
+    },
+    {
+      "text": "F12",
+      "correct": true
+    }
+  ],
+  "reveal": "Use F12 para salvar como.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 3,
+    "hora": 15
+  },
+  "yt": {
+    "titulo": "Atalhos: Qual atalho para salvar como no Excel? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

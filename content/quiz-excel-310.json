@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "NÍVEL MÉDIO",
+  "hookSub": "Funções Excel",
+  "question": "Qual função usar para\n\nmenor valor?",
+  "options": [
+    {
+      "text": "MENOR",
+      "correct": false
+    },
+    {
+      "text": "MÁXIMO",
+      "correct": false
+    },
+    {
+      "text": "MÍNIMO",
+      "correct": true
+    }
+  ],
+  "reveal": "A correta é MÍNIMO.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 13,
+    "hora": 21
+  },
+  "yt": {
+    "titulo": "Nível Médio: Qual função usar para menor valor? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

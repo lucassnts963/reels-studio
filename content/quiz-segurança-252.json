@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Segurança",
+  "hook1": "HACKER QUIZ",
+  "hookSub": "Proteja-se",
+  "question": "O que significa\no\ntermo Ransomware?",
+  "options": [
+    {
+      "text": "Sequestro de dados",
+      "correct": true
+    },
+    {
+      "text": "Queda de rede",
+      "correct": false
+    },
+    {
+      "text": "Roubo de senhas",
+      "correct": false
+    }
+  ],
+  "reveal": "É: sequestro de dados.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Segurança_da_informação",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 11,
+    "hora": 11
+  },
+  "yt": {
+    "titulo": "Hacker Quiz: O que significa o termo Ransomware? #Shorts",
+    "descricao": "Desafio de Segurança! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #segurança",
+    "tags": "quiz,tecnologia,curiosidades,segurança,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

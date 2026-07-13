@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Quiz · Curiosidades",
+  "hook1": "QUIZ TECH",
+  "hookSub": "Você usa todo dia",
+  "question": "A palavra emoji\nvem de que idioma?",
+  "options": [
+    {
+      "text": "Inglês",
+      "correct": false
+    },
+    {
+      "text": "Japonês",
+      "correct": true
+    },
+    {
+      "text": "Coreano",
+      "correct": false
+    }
+  ],
+  "reveal": "E (imagem) + moji (caractere).",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://en.wikipedia.org/wiki/Emoji",
+  "dificuldade": "",
+  "agenda": {
+    "dia": 1,
+    "hora": 17
+  },
+  "yt": {
+    "titulo": "De onde vem a palavra EMOJI? 😀 #Shorts",
+    "descricao": "Quiz rápido de tecnologia: A palavra emoji vem de que idioma? Comenta se acertou e manda pra aquele amigo que se acha expert! 👇\n\n#quiz #tecnologia #curiosidades",
+    "tags": "quiz,tecnologia,curiosidades,você sabia,quiz de tecnologia,shorts,curiosidades tech,fatos,gadgets"
+  }
+}

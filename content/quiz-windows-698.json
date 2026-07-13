@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Windows",
+  "hook1": "DUVIDO ACERTAR",
+  "hookSub": "Sabe essa de Windows?",
+  "question": "O que o atalho\nAlt +\nF4 faz no\nWindows?",
+  "options": [
+    {
+      "text": "Fechar App",
+      "correct": true
+    },
+    {
+      "text": "Abre a Lupa",
+      "correct": false
+    },
+    {
+      "text": "Desliga o PC",
+      "correct": false
+    }
+  ],
+  "reveal": "Ele faz: fechar app.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/windows",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 30,
+    "hora": 1
+  },
+  "yt": {
+    "titulo": "Duvido Acertar: O que o atalho Alt + F4 faz no Windows? #Shorts",
+    "descricao": "Desafio de Windows! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #windows",
+    "tags": "quiz,tecnologia,curiosidades,windows,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

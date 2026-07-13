@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "ATALHOS",
+  "hookSub": "Ganhe tempo no Excel",
+  "question": "Qual atalho para\nsoma\nauto. no\nExcel?",
+  "options": [
+    {
+      "text": "Ctrl + =",
+      "correct": false
+    },
+    {
+      "text": "Alt + S",
+      "correct": false
+    },
+    {
+      "text": "Alt + =",
+      "correct": true
+    }
+  ],
+  "reveal": "Use Alt + = para soma auto..",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 5,
+    "hora": 7
+  },
+  "yt": {
+    "titulo": "Atalhos: Qual atalho para soma auto. no Excel? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

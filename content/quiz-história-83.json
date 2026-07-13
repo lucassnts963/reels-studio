@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "História",
+  "hook1": "CURIOSIDADE",
+  "hookSub": "Mundo Tech",
+  "question": "Qual a resposta para\n\nano do bug do milênio?",
+  "options": [
+    {
+      "text": "2000",
+      "correct": true
+    },
+    {
+      "text": "1999",
+      "correct": false
+    },
+    {
+      "text": "2001",
+      "correct": false
+    }
+  ],
+  "reveal": "Resposta: 2000.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Informática",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 4,
+    "hora": 10
+  },
+  "yt": {
+    "titulo": "Curiosidade: Qual a resposta para ano do bug do milênio? #Shorts",
+    "descricao": "Desafio de História! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #história",
+    "tags": "quiz,tecnologia,curiosidades,história,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

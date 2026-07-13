@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "TESTE RÁPIDO",
+  "hookSub": "Acerte a função",
+  "question": "No Excel, o que faz\na\nfunção AGORA?",
+  "options": [
+    {
+      "text": "Copia dados",
+      "correct": false
+    },
+    {
+      "text": "Da erro",
+      "correct": false
+    },
+    {
+      "text": "Data e hora atual",
+      "correct": true
+    }
+  ],
+  "reveal": "É usada para data e hora atual",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 30,
+    "hora": 23
+  },
+  "yt": {
+    "titulo": "Teste Rápido: No Excel, o que faz a função AGORA? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

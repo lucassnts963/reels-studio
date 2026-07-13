@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Redes",
+  "hook1": "SOPA DE LETRAS",
+  "hookSub": "Protocolos da Web",
+  "question": "O protocolo da\nporta\n5432 é o?",
+  "options": [
+    {
+      "text": "PostgreSQL",
+      "correct": true
+    },
+    {
+      "text": "HTTP",
+      "correct": false
+    },
+    {
+      "text": "FTP",
+      "correct": false
+    }
+  ],
+  "reveal": "A porta 5432 é PostgreSQL.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Lista_de_portas_dos_protocolos_TCP_e_UDP",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 12,
+    "hora": 21
+  },
+  "yt": {
+    "titulo": "Sopa De Letras: O protocolo da porta 5432 é o? #Shorts",
+    "descricao": "Desafio de Redes! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #redes",
+    "tags": "quiz,tecnologia,curiosidades,redes,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "História Tech",
+  "hook1": "QUEM FOI?",
+  "hookSub": "Gênios da Tecnologia",
+  "question": "Quem criou o(a)\nWi-Fi?",
+  "options": [
+    {
+      "text": "Ada Lovelace",
+      "correct": false
+    },
+    {
+      "text": "Hedy Lamarr",
+      "correct": true
+    },
+    {
+      "text": "Bill Gates",
+      "correct": false
+    }
+  ],
+  "reveal": "Foi Hedy Lamarr.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/História_da_computação",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 4,
+    "hora": 17
+  },
+  "yt": {
+    "titulo": "Quem Foi?: Quem criou o(a) Wi-Fi? #Shorts",
+    "descricao": "Desafio de História Tech! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #históriatech",
+    "tags": "quiz,tecnologia,curiosidades,históriatech,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

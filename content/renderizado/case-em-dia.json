@@ -1,0 +1,40 @@
+{
+  "formato": "historia",
+  "tag": "Case · Em Dia",
+  "hook": {
+    "line1": "Não comecei",
+    "line2": "pelo código.",
+    "punch": "Comecei por uma entrevista."
+  },
+  "sections": [
+    {
+      "eyebrow": "// O problema",
+      "title": "Um contador controla\no vencimento das guias\nde ~12 clientes.",
+      "body": "na memória e em planilhas.",
+      "punch": "Esquecer = multa pro cliente."
+    },
+    {
+      "eyebrow": "// Antes do código",
+      "title": "Entrevista de requisitos\n→ User Stories, BDD.",
+      "body": "O domínio, antes de qualquer tela:",
+      "widget": { "type": "flow", "chips": ["Cliente", "Associação", "Ocorrência"] }
+    },
+    {
+      "eyebrow": "// Resultado",
+      "widget": {
+        "type": "stats",
+        "rows": [
+          ["PWA", "no ar, funciona offline"],
+          ["3 camadas", "painel · push · e-mail 08:00"],
+          ["46 testes", "domínio testado com TDD"],
+          ["R$ 0", "de infraestrutura"]
+        ]
+      }
+    }
+  ],
+  "cta": {
+    "top": "“Fiz um CRUD” ≠",
+    "title": "resolvi o problema\nde alguém com método."
+  },
+  "handleSub": "Estudo de caso completo no perfil · vamos conversar?"
+}

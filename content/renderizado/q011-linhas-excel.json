@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Quiz · Excel",
+  "hook1": "QUIZ EXCEL",
+  "hookSub": "Só os raiz sabem",
+  "question": "Quantas linhas tem\numa planilha\ndo Excel?",
+  "options": [
+    {
+      "text": "65.536",
+      "correct": false
+    },
+    {
+      "text": "1.048.576",
+      "correct": true
+    },
+    {
+      "text": "Infinitas",
+      "correct": false
+    }
+  ],
+  "reveal": "2^20 = 1.048.576 linhas.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/pt-br/office/especifica%C3%A7%C3%B5es-e-limites-do-excel-1672b34d-7043-467e-8e27-269d656771c3",
+  "dificuldade": "",
+  "agenda": {
+    "dia": 1,
+    "hora": 10
+  },
+  "yt": {
+    "titulo": "Quantas linhas cabem no Excel? 📊 #Shorts",
+    "descricao": "Quiz rápido de tecnologia: Quantas linhas tem uma planilha do Excel? Comenta se acertou e manda pra aquele amigo que se acha expert! 👇\n\n#quiz #tecnologia #curiosidades",
+    "tags": "quiz,tecnologia,curiosidades,você sabia,quiz de tecnologia,shorts,excel,planilhas,atalhos excel,dicas de excel"
+  }
+}

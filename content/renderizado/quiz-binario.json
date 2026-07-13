@@ -1,0 +1,15 @@
+{
+  "formato": "quiz",
+  "tag": "Quiz",
+  "hook1": "VOCÊ SABIA?",
+  "hookSub": "Teste rápido de informática",
+  "question": "Quantos números o\ncomputador realmente\nentende?",
+  "options": [
+    { "text": "10", "correct": false },
+    { "text": "2", "correct": true },
+    { "text": "Infinitos", "correct": false }
+  ],
+  "reveal": "Só 0 e 1 — ligado ou desligado.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA"
+}

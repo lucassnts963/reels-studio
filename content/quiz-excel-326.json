@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "NÍVEL MÉDIO",
+  "hookSub": "Funções Excel",
+  "question": "Qual função usar para\n\ntexto à esquerda?",
+  "options": [
+    {
+      "text": "ESQUERDA",
+      "correct": true
+    },
+    {
+      "text": "EXT.TEXTO",
+      "correct": false
+    },
+    {
+      "text": "DIREITA",
+      "correct": false
+    }
+  ],
+  "reveal": "A correta é ESQUERDA.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 14,
+    "hora": 13
+  },
+  "yt": {
+    "titulo": "Nível Médio: Qual função usar para texto à esquerda? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

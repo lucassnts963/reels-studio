@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Quiz · Internet",
+  "hook1": "VOCÊ SABIA?",
+  "hookSub": "99% respondem errado",
+  "question": "Wi-Fi significa\n'Wireless Fidelity'?",
+  "options": [
+    {
+      "text": "Não, é marketing",
+      "correct": true
+    },
+    {
+      "text": "Sim",
+      "correct": false
+    },
+    {
+      "text": "Só nos EUA",
+      "correct": false
+    }
+  ],
+  "reveal": "Não significa nada! É marca.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://en.wikipedia.org/wiki/Wi-Fi#Etymology_and_terminology",
+  "dificuldade": "",
+  "agenda": {
+    "dia": 1,
+    "hora": 9
+  },
+  "yt": {
+    "titulo": "Wi-Fi NÃO significa o que você pensa 📶 #Shorts",
+    "descricao": "Quiz rápido de tecnologia: Wi-Fi significa 'Wireless Fidelity'? Comenta se acertou e manda pra aquele amigo que se acha expert! 👇\n\n#quiz #tecnologia #curiosidades",
+    "tags": "quiz,tecnologia,curiosidades,você sabia,quiz de tecnologia,shorts,internet,web,navegador"
+  }
+}

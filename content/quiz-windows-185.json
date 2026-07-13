@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Windows",
+  "hook1": "DUVIDO ACERTAR",
+  "hookSub": "Sabe essa de Windows?",
+  "question": "O que o atalho\nWin + M\nfaz no\nWindows?",
+  "options": [
+    {
+      "text": "Abre a Lupa",
+      "correct": false
+    },
+    {
+      "text": "Minimizar Tudo",
+      "correct": true
+    },
+    {
+      "text": "Desliga o PC",
+      "correct": false
+    }
+  ],
+  "reveal": "Ele faz: minimizar tudo.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/windows",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 8,
+    "hora": 16
+  },
+  "yt": {
+    "titulo": "Duvido Acertar: O que o atalho Win + M faz no Windows? #Shorts",
+    "descricao": "Desafio de Windows! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #windows",
+    "tags": "quiz,tecnologia,curiosidades,windows,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

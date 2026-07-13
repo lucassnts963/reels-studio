@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Segurança",
+  "hook1": "CIBERSEGURA",
+  "hookSub": "Ameaças digitais",
+  "question": "Qual nome dado a\nverme\nauto-replic.?",
+  "options": [
+    {
+      "text": "Worm",
+      "correct": true
+    },
+    {
+      "text": "Spam",
+      "correct": false
+    },
+    {
+      "text": "Bug",
+      "correct": false
+    }
+  ],
+  "reveal": "O termo é Worm.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Segurança_da_informação",
+  "dificuldade": "dificil",
+  "agenda": {
+    "dia": 30,
+    "hora": 14
+  },
+  "yt": {
+    "titulo": "Cibersegura: Qual nome dado a verme auto-replic.? #Shorts",
+    "descricao": "Desafio de Segurança! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #segurança",
+    "tags": "quiz,tecnologia,curiosidades,segurança,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

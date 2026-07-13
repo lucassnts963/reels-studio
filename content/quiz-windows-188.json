@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Windows",
+  "hook1": "DICA DE PC",
+  "hookSub": "Atalhos do Windows",
+  "question": "Como bloquear pc\n\nusando o teclado?",
+  "options": [
+    {
+      "text": "Win + B",
+      "correct": false
+    },
+    {
+      "text": "Win + X",
+      "correct": false
+    },
+    {
+      "text": "Win + L",
+      "correct": true
+    }
+  ],
+  "reveal": "Win + L é o atalho certo.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/windows",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 8,
+    "hora": 19
+  },
+  "yt": {
+    "titulo": "Dica De Pc: Como bloquear pc usando o teclado? #Shorts",
+    "descricao": "Desafio de Windows! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #windows",
+    "tags": "quiz,tecnologia,curiosidades,windows,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

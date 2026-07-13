@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Segurança",
+  "hook1": "HACKER QUIZ",
+  "hookSub": "Proteja-se",
+  "question": "O que significa\no\ntermo Keylogger?",
+  "options": [
+    {
+      "text": "Copia arquivos",
+      "correct": false
+    },
+    {
+      "text": "Quebra senhas",
+      "correct": false
+    },
+    {
+      "text": "Captura teclas",
+      "correct": true
+    }
+  ],
+  "reveal": "É: captura teclas.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Segurança_da_informação",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 32,
+    "hora": 0
+  },
+  "yt": {
+    "titulo": "Hacker Quiz: O que significa o termo Keylogger? #Shorts",
+    "descricao": "Desafio de Segurança! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #segurança",
+    "tags": "quiz,tecnologia,curiosidades,segurança,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

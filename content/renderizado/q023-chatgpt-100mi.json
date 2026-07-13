@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Quiz · IA",
+  "hook1": "QUIZ DE IA",
+  "hookSub": "Recorde histórico",
+  "question": "ChatGPT levou quanto\ntempo p/ 100 milhões\nde usuários?",
+  "options": [
+    {
+      "text": "2 meses",
+      "correct": true
+    },
+    {
+      "text": "1 ano",
+      "correct": false
+    },
+    {
+      "text": "3 anos",
+      "correct": false
+    }
+  ],
+  "reveal": "2 meses — recorde da época.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://en.wikipedia.org/wiki/ChatGPT",
+  "dificuldade": "",
+  "agenda": {
+    "dia": 1,
+    "hora": 22
+  },
+  "yt": {
+    "titulo": "A velocidade INSANA do ChatGPT 🤯 #Shorts",
+    "descricao": "Quiz rápido de tecnologia: ChatGPT levou quanto tempo p/ 100 milhões de usuários? Comenta se acertou e manda pra aquele amigo que se acha expert! 👇\n\n#quiz #tecnologia #curiosidades",
+    "tags": "quiz,tecnologia,curiosidades,você sabia,quiz de tecnologia,shorts,inteligencia artificial,ia,chatgpt"
+  }
+}

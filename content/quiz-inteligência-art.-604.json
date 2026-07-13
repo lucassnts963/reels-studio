@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Inteligência Art.",
+  "hook1": "QUAL ANO?",
+  "hookSub": "Evolução da IA",
+  "question": "Em que ano surgiu\no\nmodelo AlphaGo?",
+  "options": [
+    {
+      "text": "2018",
+      "correct": false
+    },
+    {
+      "text": "2016",
+      "correct": true
+    },
+    {
+      "text": "2015",
+      "correct": false
+    }
+  ],
+  "reveal": "Foi lançado em 2016.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Inteligência_artificial",
+  "dificuldade": "dificil",
+  "agenda": {
+    "dia": 26,
+    "hora": 3
+  },
+  "yt": {
+    "titulo": "Qual Ano?: Em que ano surgiu o modelo AlphaGo? #Shorts",
+    "descricao": "Desafio de Inteligência Art.! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #inteligênciaart.",
+    "tags": "quiz,tecnologia,curiosidades,inteligênciaart.,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "ATALHOS",
+  "hookSub": "Ganhe tempo no Excel",
+  "question": "Qual atalho para\nabrir\nno\nExcel?",
+  "options": [
+    {
+      "text": "Ctrl + O",
+      "correct": false
+    },
+    {
+      "text": "Ctrl + E",
+      "correct": false
+    },
+    {
+      "text": "Ctrl + A",
+      "correct": true
+    }
+  ],
+  "reveal": "Use Ctrl + A para abrir.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 12,
+    "hora": 20
+  },
+  "yt": {
+    "titulo": "Atalhos: Qual atalho para abrir no Excel? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

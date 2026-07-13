@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Windows",
+  "hook1": "DICA DE PC",
+  "hookSub": "Atalhos do Windows",
+  "question": "Como área de transf\n\nusando o teclado?",
+  "options": [
+    {
+      "text": "Ctrl + V",
+      "correct": false
+    },
+    {
+      "text": "Win + V",
+      "correct": true
+    },
+    {
+      "text": "Win + C",
+      "correct": false
+    }
+  ],
+  "reveal": "Win + V é o atalho certo.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/windows",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 30,
+    "hora": 6
+  },
+  "yt": {
+    "titulo": "Dica De Pc: Como área de transf usando o teclado? #Shorts",
+    "descricao": "Desafio de Windows! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #windows",
+    "tags": "quiz,tecnologia,curiosidades,windows,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "História Tech",
+  "hook1": "SABE ESSA?",
+  "hookSub": "Invenções",
+  "question": "O que Satoshi Nakamoto\n\najudou a criar?",
+  "options": [
+    {
+      "text": "O primeiro PC",
+      "correct": false
+    },
+    {
+      "text": "A internet",
+      "correct": false
+    },
+    {
+      "text": "Bitcoin",
+      "correct": true
+    }
+  ],
+  "reveal": "Foi o(a) Bitcoin.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/História_da_computação",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 11,
+    "hora": 12
+  },
+  "yt": {
+    "titulo": "Sabe Essa?: O que Satoshi Nakamoto ajudou a criar? #Shorts",
+    "descricao": "Desafio de História Tech! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #históriatech",
+    "tags": "quiz,tecnologia,curiosidades,históriatech,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

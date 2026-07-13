@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Quiz · História",
+  "hook1": "DUVIDO ACERTAR",
+  "hookSub": "Quiz de história tech",
+  "question": "Quanto pesava o\nENIAC, computador\nde 1946?",
+  "options": [
+    {
+      "text": "300 kg",
+      "correct": false
+    },
+    {
+      "text": "2 toneladas",
+      "correct": false
+    },
+    {
+      "text": "27 toneladas",
+      "correct": true
+    }
+  ],
+  "reveal": "27 toneladas e 167 m²!",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://en.wikipedia.org/wiki/ENIAC",
+  "dificuldade": "",
+  "agenda": {
+    "dia": 1,
+    "hora": 3
+  },
+  "yt": {
+    "titulo": "Quanto pesava um computador de 1946? 😱 #Shorts",
+    "descricao": "Quiz rápido de tecnologia: Quanto pesava o ENIAC, computador de 1946? Comenta se acertou e manda pra aquele amigo que se acha expert! 👇\n\n#quiz #tecnologia #curiosidades",
+    "tags": "quiz,tecnologia,curiosidades,você sabia,quiz de tecnologia,shorts,historia da computacao,retro,computadores antigos"
+  }
+}

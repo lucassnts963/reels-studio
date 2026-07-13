@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Hardware",
+  "hook1": "SIGLAS TECH",
+  "hookSub": "O que significa?",
+  "question": "O que significa\na\nsigla PDF?",
+  "options": [
+    {
+      "text": "Arquivo Pessoal",
+      "correct": false
+    },
+    {
+      "text": "Documento Fixo",
+      "correct": false
+    },
+    {
+      "text": "Formato Portátil",
+      "correct": true
+    }
+  ],
+  "reveal": "PDF = Formato Portátil.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Glossário_de_informática",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 18,
+    "hora": 1
+  },
+  "yt": {
+    "titulo": "Siglas Tech: O que significa a sigla PDF? #Shorts",
+    "descricao": "Desafio de Hardware! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #hardware",
+    "tags": "quiz,tecnologia,curiosidades,hardware,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

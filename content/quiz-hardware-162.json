@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Hardware",
+  "hook1": "VOCÊ SABIA?",
+  "hookSub": "Curiosidades Rápidas",
+  "question": "Sobre hardware:\n\ntamanho do disquete?",
+  "options": [
+    {
+      "text": "1.44 MB",
+      "correct": true
+    },
+    {
+      "text": "1.0 MB",
+      "correct": false
+    },
+    {
+      "text": "2.0 MB",
+      "correct": false
+    }
+  ],
+  "reveal": "É exatamente 1.44 MB.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Informática",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 7,
+    "hora": 17
+  },
+  "yt": {
+    "titulo": "Você Sabia?: Sobre hardware: tamanho do disquete? #Shorts",
+    "descricao": "Desafio de Hardware! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #hardware",
+    "tags": "quiz,tecnologia,curiosidades,hardware,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

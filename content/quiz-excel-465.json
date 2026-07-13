@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "ATALHOS",
+  "hookSub": "Ganhe tempo no Excel",
+  "question": "Qual atalho para\n\nsalvar no\nExcel?",
+  "options": [
+    {
+      "text": "Alt + S",
+      "correct": false
+    },
+    {
+      "text": "Ctrl + B",
+      "correct": true
+    },
+    {
+      "text": "Ctrl + S",
+      "correct": false
+    }
+  ],
+  "reveal": "Use Ctrl + B para salvar.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 20,
+    "hora": 8
+  },
+  "yt": {
+    "titulo": "Atalhos: Qual atalho para salvar no Excel? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

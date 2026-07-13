@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "VOCÊ SABIA?",
+  "hookSub": "Mestre das Planilhas",
+  "question": "Qual a função do\n\nNÚM.CARACT no Excel?",
+  "options": [
+    {
+      "text": "EXATO",
+      "correct": false
+    },
+    {
+      "text": "PROCURAR",
+      "correct": false
+    },
+    {
+      "text": "Conta caracteres",
+      "correct": true
+    }
+  ],
+  "reveal": "NÚM.CARACT faz: Conta caracteres",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 11,
+    "hora": 16
+  },
+  "yt": {
+    "titulo": "Você Sabia?: Qual a função do NÚM.CARACT no Excel? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

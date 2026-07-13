@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Windows",
+  "hook1": "DUVIDO ACERTAR",
+  "hookSub": "Sabe essa de Windows?",
+  "question": "O que o atalho\nWin + V\nfaz no\nWindows?",
+  "options": [
+    {
+      "text": "Desliga o PC",
+      "correct": false
+    },
+    {
+      "text": "Abre a Lupa",
+      "correct": false
+    },
+    {
+      "text": "Área de Transf",
+      "correct": true
+    }
+  ],
+  "reveal": "Ele faz: área de transf.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/windows",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 29,
+    "hora": 19
+  },
+  "yt": {
+    "titulo": "Duvido Acertar: O que o atalho Win + V faz no Windows? #Shorts",
+    "descricao": "Desafio de Windows! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #windows",
+    "tags": "quiz,tecnologia,curiosidades,windows,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

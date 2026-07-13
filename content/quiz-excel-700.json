@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "NÍVEL MÉDIO",
+  "hookSub": "Funções Excel",
+  "question": "Qual função usar para\n\nteste lógico?",
+  "options": [
+    {
+      "text": "SE",
+      "correct": true
+    },
+    {
+      "text": "OU",
+      "correct": false
+    },
+    {
+      "text": "E",
+      "correct": false
+    }
+  ],
+  "reveal": "A correta é SE.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 30,
+    "hora": 3
+  },
+  "yt": {
+    "titulo": "Nível Médio: Qual função usar para teste lógico? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

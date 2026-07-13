@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "História Tech",
+  "hook1": "SABE ESSA?",
+  "hookSub": "Invenções",
+  "question": "O que Dennis Ritchie\n\najudou a criar?",
+  "options": [
+    {
+      "text": "Linguagem C",
+      "correct": true
+    },
+    {
+      "text": "O primeiro PC",
+      "correct": false
+    },
+    {
+      "text": "A internet",
+      "correct": false
+    }
+  ],
+  "reveal": "Foi o(a) Linguagem C.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/História_da_computação",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 11,
+    "hora": 6
+  },
+  "yt": {
+    "titulo": "Sabe Essa?: O que Dennis Ritchie ajudou a criar? #Shorts",
+    "descricao": "Desafio de História Tech! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #históriatech",
+    "tags": "quiz,tecnologia,curiosidades,históriatech,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

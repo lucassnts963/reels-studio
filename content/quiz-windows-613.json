@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Windows",
+  "hook1": "DICA DE PC",
+  "hookSub": "Atalhos do Windows",
+  "question": "Como desfazer\nusando o\nteclado?",
+  "options": [
+    {
+      "text": "Alt + Z",
+      "correct": false
+    },
+    {
+      "text": "Ctrl + Y",
+      "correct": false
+    },
+    {
+      "text": "Ctrl + Z",
+      "correct": true
+    }
+  ],
+  "reveal": "Ctrl + Z é o atalho certo.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/windows",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 26,
+    "hora": 12
+  },
+  "yt": {
+    "titulo": "Dica De Pc: Como desfazer usando o teclado? #Shorts",
+    "descricao": "Desafio de Windows! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #windows",
+    "tags": "quiz,tecnologia,curiosidades,windows,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

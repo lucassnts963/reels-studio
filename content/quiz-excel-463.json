@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "QUAL É?",
+  "hookSub": "Teste de Atalho",
+  "question": "O atalho Ctrl + I\n\nserve para quê\nno\nExcel?",
+  "options": [
+    {
+      "text": "Itálico",
+      "correct": true
+    },
+    {
+      "text": "Apagar tudo",
+      "correct": false
+    },
+    {
+      "text": "Travar célula",
+      "correct": false
+    }
+  ],
+  "reveal": "Serve para itálico.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 20,
+    "hora": 6
+  },
+  "yt": {
+    "titulo": "Qual É?: O atalho Ctrl + I serve para quê no Excel? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

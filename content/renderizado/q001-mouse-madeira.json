@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Quiz · História",
+  "hook1": "VOCÊ SABIA?",
+  "hookSub": "Quiz de história tech",
+  "question": "De que material era\no primeiro mouse\nda história?",
+  "options": [
+    {
+      "text": "Plástico",
+      "correct": false
+    },
+    {
+      "text": "Madeira",
+      "correct": true
+    },
+    {
+      "text": "Alumínio",
+      "correct": false
+    }
+  ],
+  "reveal": "Madeira! Criado em 1964.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://en.wikipedia.org/wiki/Computer_mouse",
+  "dificuldade": "",
+  "agenda": {
+    "dia": 1,
+    "hora": 0
+  },
+  "yt": {
+    "titulo": "De que material era o PRIMEIRO mouse da história? 🖱️ #Shorts",
+    "descricao": "Quiz rápido de tecnologia: De que material era o primeiro mouse da história? Comenta se acertou e manda pra aquele amigo que se acha expert! 👇\n\n#quiz #tecnologia #curiosidades",
+    "tags": "quiz,tecnologia,curiosidades,você sabia,quiz de tecnologia,shorts,historia da computacao,retro,computadores antigos"
+  }
+}

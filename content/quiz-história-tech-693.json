@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "História Tech",
+  "hook1": "SABE ESSA?",
+  "hookSub": "Invenções",
+  "question": "O que Y. Matsumoto\n\najudou a criar?",
+  "options": [
+    {
+      "text": "Ruby",
+      "correct": true
+    },
+    {
+      "text": "A internet",
+      "correct": false
+    },
+    {
+      "text": "O primeiro PC",
+      "correct": false
+    }
+  ],
+  "reveal": "Foi o(a) Ruby.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/História_da_computação",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 29,
+    "hora": 20
+  },
+  "yt": {
+    "titulo": "Sabe Essa?: O que Y. Matsumoto ajudou a criar? #Shorts",
+    "descricao": "Desafio de História Tech! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #históriatech",
+    "tags": "quiz,tecnologia,curiosidades,históriatech,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

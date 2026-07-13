@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Hardware",
+  "hook1": "CURIOSIDADE",
+  "hookSub": "Mundo Tech",
+  "question": "Qual a resposta para\n\ntamanho do disquete?",
+  "options": [
+    {
+      "text": "2.0 MB",
+      "correct": false
+    },
+    {
+      "text": "1.44 MB",
+      "correct": true
+    },
+    {
+      "text": "1.0 MB",
+      "correct": false
+    }
+  ],
+  "reveal": "Resposta: 1.44 MB.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Informática",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 22,
+    "hora": 16
+  },
+  "yt": {
+    "titulo": "Curiosidade: Qual a resposta para tamanho do disquete? #Shorts",
+    "descricao": "Desafio de Hardware! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #hardware",
+    "tags": "quiz,tecnologia,curiosidades,hardware,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

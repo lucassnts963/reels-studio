@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>reels-studio player</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; height: 100%; background: #0a0a0a; overflow: hidden; }
+  #root { position: fixed; inset: 0; }
+  #err { color: #f66; font: 14px/1.5 monospace; padding: 40px; white-space: pre-wrap; }
+</style>
+<script src="/engine/vendor/react.js"></script>
+<script src="/engine/vendor/react-dom.js"></script>
+<script src="/engine/vendor/babel.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script>
+(async () => {
+  const q = new URLSearchParams(location.search);
+  const slug = q.get('reel');
+  if (!slug) {
+    const list = await (await fetch('/api/reels')).json().catch(() => []);
+    document.body.innerHTML = '<div id="err" style="color:#eee">reels-studio — use ?reel=&lt;slug&gt;\n\nDisponíveis:\n' +
+      list.map(s => '  · <a style="color:#E5484D" href="/player/player.html?reel=' + s + '">' + s + '</a>').join('\n') + '</div>';
+    return;
+  }
+  const res = await fetch('/content/' + slug + '.json');
+  if (!res.ok) throw new Error('content/' + slug + '.json não encontrado (' + res.status + ')');
+  const cfg = await res.json();
+  window.REEL_CONFIG = cfg;
+
+  const files = [
+    '/engine/animations.jsx',
+    '/engine/reel-kit.jsx',
+    cfg.formato === 'custom' ? '/custom/' + cfg.file : '/templates/' + cfg.formato + '.jsx',
+  ];
+  for (const f of files) {
+    const r = await fetch(f);
+    if (!r.ok) throw new Error(f + ' não encontrado (' + r.status + ')');
+    const src = await r.text();
+    const out = Babel.transform(src, { presets: ['react'], filename: f }).code;
+    (0, eval)(out);
+  }
+
+  const Comp = cfg.component ? window[cfg.component] : window.__ReelComponent;
+  if (!Comp) throw new Error('Componente do reel não foi definido (window.__ReelComponent)');
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(React.createElement(Comp));
+
+  // Garante as fontes carregadas antes de sinalizar pronto (o render depende disso).
+  await Promise.all([
+    document.fonts.load("700 20px 'IBM Plex Sans'"),
+    document.fonts.load("600 20px 'IBM Plex Sans'"),
+    document.fonts.load("500 20px 'IBM Plex Sans'"),
+    document.fonts.load("700 20px 'IBM Plex Mono'"),
+    document.fonts.load("600 20px 'IBM Plex Mono'"),
+    document.fonts.load("500 20px 'IBM Plex Mono'"),
+  ]);
+  await document.fonts.ready;
+  requestAnimationFrame(() => requestAnimationFrame(() => { window.__REEL_READY = true; }));
+})().catch(e => {
+  window.__REEL_ERROR = String(e && e.stack || e);
+  document.body.innerHTML = '<div id="err"></div>';
+  document.getElementById('err').textContent = window.__REEL_ERROR;
+});
+</script>
+</body>
+</html>

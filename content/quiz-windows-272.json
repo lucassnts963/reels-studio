@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Windows",
+  "hook1": "DICA DE PC",
+  "hookSub": "Atalhos do Windows",
+  "question": "Como alternar app\n\nusando o teclado?",
+  "options": [
+    {
+      "text": "Ctrl + Tab",
+      "correct": false
+    },
+    {
+      "text": "Alt + Tab",
+      "correct": true
+    },
+    {
+      "text": "Win + Tab",
+      "correct": false
+    }
+  ],
+  "reveal": "Alt + Tab é o atalho certo.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/windows",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 12,
+    "hora": 7
+  },
+  "yt": {
+    "titulo": "Dica De Pc: Como alternar app usando o teclado? #Shorts",
+    "descricao": "Desafio de Windows! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #windows",
+    "tags": "quiz,tecnologia,curiosidades,windows,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Inteligência Art.",
+  "hook1": "IA QUIZ",
+  "hookSub": "Gigantes da IA",
+  "question": "Qual empresa criou\no\nWatson?",
+  "options": [
+    {
+      "text": "Apple",
+      "correct": false
+    },
+    {
+      "text": "Microsoft",
+      "correct": false
+    },
+    {
+      "text": "IBM",
+      "correct": true
+    }
+  ],
+  "reveal": "Watson é da IBM.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Inteligência_artificial",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 3,
+    "hora": 9
+  },
+  "yt": {
+    "titulo": "Ia Quiz: Qual empresa criou o Watson? #Shorts",
+    "descricao": "Desafio de Inteligência Art.! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #inteligênciaart.",
+    "tags": "quiz,tecnologia,curiosidades,inteligênciaart.,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "QUAL É?",
+  "hookSub": "Teste de Atalho",
+  "question": "O atalho F4\nserve para\nquê\nno Excel?",
+  "options": [
+    {
+      "text": "Apagar tudo",
+      "correct": false
+    },
+    {
+      "text": "Travar Ref.",
+      "correct": true
+    },
+    {
+      "text": "Travar célula",
+      "correct": false
+    }
+  ],
+  "reveal": "Serve para travar ref..",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 23,
+    "hora": 11
+  },
+  "yt": {
+    "titulo": "Qual É?: O atalho F4 serve para quê no Excel? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Hardware",
+  "hook1": "CURIOSIDADE",
+  "hookSub": "Mundo Tech",
+  "question": "Qual a resposta para\n1\nbyte?",
+  "options": [
+    {
+      "text": "16 Bits",
+      "correct": false
+    },
+    {
+      "text": "4 Bits",
+      "correct": false
+    },
+    {
+      "text": "8 Bits",
+      "correct": true
+    }
+  ],
+  "reveal": "Resposta: 8 Bits.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Informática",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 1,
+    "hora": 7
+  },
+  "yt": {
+    "titulo": "Curiosidade: Qual a resposta para 1 byte? #Shorts",
+    "descricao": "Desafio de Hardware! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #hardware",
+    "tags": "quiz,tecnologia,curiosidades,hardware,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

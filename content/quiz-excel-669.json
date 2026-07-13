@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "TESTE RÁPIDO",
+  "hookSub": "Acerte a função",
+  "question": "No Excel, o que faz\na\nfunção ESQUERDA?",
+  "options": [
+    {
+      "text": "Texto à esquerda",
+      "correct": true
+    },
+    {
+      "text": "Copia dados",
+      "correct": false
+    },
+    {
+      "text": "Da erro",
+      "correct": false
+    }
+  ],
+  "reveal": "É usada para texto à esquerda",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 28,
+    "hora": 20
+  },
+  "yt": {
+    "titulo": "Teste Rápido: No Excel, o que faz a função ESQUERDA? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

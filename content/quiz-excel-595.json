@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "VOCÊ SABIA?",
+  "hookSub": "Mestre das Planilhas",
+  "question": "Qual a função do\nAGORA\nno Excel?",
+  "options": [
+    {
+      "text": "TEMPO",
+      "correct": false
+    },
+    {
+      "text": "Data e hora atual",
+      "correct": true
+    },
+    {
+      "text": "HOJE",
+      "correct": false
+    }
+  ],
+  "reveal": "AGORA faz: Data e hora atual",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 25,
+    "hora": 18
+  },
+  "yt": {
+    "titulo": "Você Sabia?: Qual a função do AGORA no Excel? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

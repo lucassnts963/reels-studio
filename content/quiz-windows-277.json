@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Windows",
+  "hook1": "VOCÊ SABIA?",
+  "hookSub": "Curiosidades Rápidas",
+  "question": "Sobre windows:\n\nextensão do word?",
+  "options": [
+    {
+      "text": ".pptx",
+      "correct": false
+    },
+    {
+      "text": ".xlsx",
+      "correct": false
+    },
+    {
+      "text": ".docx",
+      "correct": true
+    }
+  ],
+  "reveal": "É exatamente .docx.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Informática",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 12,
+    "hora": 12
+  },
+  "yt": {
+    "titulo": "Você Sabia?: Sobre windows: extensão do word? #Shorts",
+    "descricao": "Desafio de Windows! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #windows",
+    "tags": "quiz,tecnologia,curiosidades,windows,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

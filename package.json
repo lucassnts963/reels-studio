@@ -1,0 +1,19 @@
+{
+  "name": "reels-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Gerador de Reels elucas.dev: JSON de conteúdo -> preview -> MP4 1080x1920",
+  "scripts": {
+    "serve": "node cli.mjs serve",
+    "render": "node cli.mjs render"
+  },
+  "dependencies": {
+    "puppeteer-core": "^24.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "ffmpeg-static"
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Windows",
+  "hook1": "DUVIDO ACERTAR",
+  "hookSub": "Sabe essa de Windows?",
+  "question": "O que o atalho\nCtrl +\nC faz no\nWindows?",
+  "options": [
+    {
+      "text": "Desliga o PC",
+      "correct": false
+    },
+    {
+      "text": "Abre a Lupa",
+      "correct": false
+    },
+    {
+      "text": "Copiar",
+      "correct": true
+    }
+  ],
+  "reveal": "Ele faz: copiar.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/windows",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 17,
+    "hora": 14
+  },
+  "yt": {
+    "titulo": "Duvido Acertar: O que o atalho Ctrl + C faz no Windows? #Shorts",
+    "descricao": "Desafio de Windows! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #windows",
+    "tags": "quiz,tecnologia,curiosidades,windows,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

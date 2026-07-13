@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Quiz · Curiosidades",
+  "hook1": "TESTE RÁPIDO",
+  "hookSub": "Quiz de curiosidades",
+  "question": "As versões antigas\ndo Android tinham\nnome de...",
+  "options": [
+    {
+      "text": "Doces",
+      "correct": true
+    },
+    {
+      "text": "Planetas",
+      "correct": false
+    },
+    {
+      "text": "Animais",
+      "correct": false
+    }
+  ],
+  "reveal": "KitKat, Oreo, Pie… doçura!",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://en.wikipedia.org/wiki/Android_version_history",
+  "dificuldade": "",
+  "agenda": {
+    "dia": 1,
+    "hora": 14
+  },
+  "yt": {
+    "titulo": "O segredo dos nomes do Android 🍭 #Shorts",
+    "descricao": "Quiz rápido de tecnologia: As versões antigas do Android tinham nome de... Comenta se acertou e manda pra aquele amigo que se acha expert! 👇\n\n#quiz #tecnologia #curiosidades",
+    "tags": "quiz,tecnologia,curiosidades,você sabia,quiz de tecnologia,shorts,curiosidades tech,fatos,gadgets"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Inteligência Art.",
+  "hook1": "QUAL ANO?",
+  "hookSub": "Evolução da IA",
+  "question": "Em que ano surgiu\no\nmodelo Llama?",
+  "options": [
+    {
+      "text": "2025",
+      "correct": false
+    },
+    {
+      "text": "2022",
+      "correct": false
+    },
+    {
+      "text": "2023",
+      "correct": true
+    }
+  ],
+  "reveal": "Foi lançado em 2023.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Inteligência_artificial",
+  "dificuldade": "dificil",
+  "agenda": {
+    "dia": 10,
+    "hora": 15
+  },
+  "yt": {
+    "titulo": "Qual Ano?: Em que ano surgiu o modelo Llama? #Shorts",
+    "descricao": "Desafio de Inteligência Art.! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #inteligênciaart.",
+    "tags": "quiz,tecnologia,curiosidades,inteligênciaart.,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

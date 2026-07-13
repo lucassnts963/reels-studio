@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Windows",
+  "hook1": "DICA DE PC",
+  "hookSub": "Atalhos do Windows",
+  "question": "Como recortar\nusando o\nteclado?",
+  "options": [
+    {
+      "text": "Alt + X",
+      "correct": false
+    },
+    {
+      "text": "Ctrl + X",
+      "correct": true
+    },
+    {
+      "text": "Ctrl + C",
+      "correct": false
+    }
+  ],
+  "reveal": "Ctrl + X é o atalho certo.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/windows",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 28,
+    "hora": 21
+  },
+  "yt": {
+    "titulo": "Dica De Pc: Como recortar usando o teclado? #Shorts",
+    "descricao": "Desafio de Windows! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #windows",
+    "tags": "quiz,tecnologia,curiosidades,windows,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "CURIOSIDADE",
+  "hookSub": "Mundo Tech",
+  "question": "Qual a resposta para\n\ncolunas no excel?",
+  "options": [
+    {
+      "text": "16.384",
+      "correct": true
+    },
+    {
+      "text": "256",
+      "correct": false
+    },
+    {
+      "text": "8.192",
+      "correct": false
+    }
+  ],
+  "reveal": "Resposta: 16.384.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Informática",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 2,
+    "hora": 17
+  },
+  "yt": {
+    "titulo": "Curiosidade: Qual a resposta para colunas no excel? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

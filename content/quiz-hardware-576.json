@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Hardware",
+  "hook1": "SABE O NOME?",
+  "hookSub": "Desafio de Siglas",
+  "question": "Qual sigla para\n\nprocessamento gráf.?",
+  "options": [
+    {
+      "text": "GPU",
+      "correct": true
+    },
+    {
+      "text": "USB",
+      "correct": false
+    },
+    {
+      "text": "CPU",
+      "correct": false
+    }
+  ],
+  "reveal": "A sigla é GPU.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Glossário_de_informática",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 24,
+    "hora": 23
+  },
+  "yt": {
+    "titulo": "Sabe O Nome?: Qual sigla para processamento gráf.? #Shorts",
+    "descricao": "Desafio de Hardware! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #hardware",
+    "tags": "quiz,tecnologia,curiosidades,hardware,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

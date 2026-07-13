@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Hardware",
+  "hook1": "VOCÊ SABIA?",
+  "hookSub": "Curiosidades Rápidas",
+  "question": "Sobre hardware:\n1\nkilobyte?",
+  "options": [
+    {
+      "text": "1000 Bytes",
+      "correct": false
+    },
+    {
+      "text": "1048 Bytes",
+      "correct": false
+    },
+    {
+      "text": "1024 Bytes",
+      "correct": true
+    }
+  ],
+  "reveal": "É exatamente 1024 Bytes.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Informática",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 23,
+    "hora": 4
+  },
+  "yt": {
+    "titulo": "Você Sabia?: Sobre hardware: 1 kilobyte? #Shorts",
+    "descricao": "Desafio de Hardware! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #hardware",
+    "tags": "quiz,tecnologia,curiosidades,hardware,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

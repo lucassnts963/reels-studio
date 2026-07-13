@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "História Tech",
+  "hook1": "ANO EXATO",
+  "hookSub": "Viagem no tempo",
+  "question": "Em que ano surgiu\no(a)\nLinguagem C?",
+  "options": [
+    {
+      "text": "1969",
+      "correct": false
+    },
+    {
+      "text": "1977",
+      "correct": false
+    },
+    {
+      "text": "1972",
+      "correct": true
+    }
+  ],
+  "reveal": "Surgiu no ano de 1972.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/História_da_computação",
+  "dificuldade": "dificil",
+  "agenda": {
+    "dia": 19,
+    "hora": 19
+  },
+  "yt": {
+    "titulo": "Ano Exato: Em que ano surgiu o(a) Linguagem C? #Shorts",
+    "descricao": "Desafio de História Tech! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #históriatech",
+    "tags": "quiz,tecnologia,curiosidades,históriatech,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

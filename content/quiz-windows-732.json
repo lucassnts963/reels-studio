@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Windows",
+  "hook1": "DUVIDO ACERTAR",
+  "hookSub": "Sabe essa de Windows?",
+  "question": "O que o atalho\nWin + S\nfaz no\nWindows?",
+  "options": [
+    {
+      "text": "Abre a Lupa",
+      "correct": false
+    },
+    {
+      "text": "Buscar",
+      "correct": true
+    },
+    {
+      "text": "Desliga o PC",
+      "correct": false
+    }
+  ],
+  "reveal": "Ele faz: buscar.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/windows",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 31,
+    "hora": 11
+  },
+  "yt": {
+    "titulo": "Duvido Acertar: O que o atalho Win + S faz no Windows? #Shorts",
+    "descricao": "Desafio de Windows! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #windows",
+    "tags": "quiz,tecnologia,curiosidades,windows,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

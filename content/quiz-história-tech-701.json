@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "História Tech",
+  "hook1": "QUEM FOI?",
+  "hookSub": "Gênios da Tecnologia",
+  "question": "Quem criou o(a)\nMouse?",
+  "options": [
+    {
+      "text": "Douglas Engelbart",
+      "correct": true
+    },
+    {
+      "text": "Bill Gates",
+      "correct": false
+    },
+    {
+      "text": "Bill Gates",
+      "correct": false
+    }
+  ],
+  "reveal": "Foi Douglas Engelbart.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/História_da_computação",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 30,
+    "hora": 4
+  },
+  "yt": {
+    "titulo": "Quem Foi?: Quem criou o(a) Mouse? #Shorts",
+    "descricao": "Desafio de História Tech! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #históriatech",
+    "tags": "quiz,tecnologia,curiosidades,históriatech,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

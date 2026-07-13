@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Hardware",
+  "hook1": "CURIOSIDADE",
+  "hookSub": "Mundo Tech",
+  "question": "Qual a resposta para\n\nteclas teclado br?",
+  "options": [
+    {
+      "text": "101 teclas",
+      "correct": false
+    },
+    {
+      "text": "104 teclas",
+      "correct": false
+    },
+    {
+      "text": "107 teclas",
+      "correct": true
+    }
+  ],
+  "reveal": "Resposta: 107 teclas.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Informática",
+  "dificuldade": "media",
+  "agenda": {
+    "dia": 2,
+    "hora": 6
+  },
+  "yt": {
+    "titulo": "Curiosidade: Qual a resposta para teclas teclado br? #Shorts",
+    "descricao": "Desafio de Hardware! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #hardware",
+    "tags": "quiz,tecnologia,curiosidades,hardware,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

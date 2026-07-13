@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Excel",
+  "hook1": "ATALHOS",
+  "hookSub": "Ganhe tempo no Excel",
+  "question": "Qual atalho para\n\nselecionar tudo no\n\nExcel?",
+  "options": [
+    {
+      "text": "Ctrl + Espaço",
+      "correct": false
+    },
+    {
+      "text": "Ctrl + T",
+      "correct": true
+    },
+    {
+      "text": "Ctrl + A",
+      "correct": false
+    }
+  ],
+  "reveal": "Use Ctrl + T para selecionar tudo.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://support.microsoft.com/",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 26,
+    "hora": 22
+  },
+  "yt": {
+    "titulo": "Atalhos: Qual atalho para selecionar tudo no Excel? #Shorts",
+    "descricao": "Desafio de Excel! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #excel",
+    "tags": "quiz,tecnologia,curiosidades,excel,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}

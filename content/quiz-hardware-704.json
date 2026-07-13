@@ -1,0 +1,35 @@
+{
+  "formato": "quiz",
+  "tag": "Hardware",
+  "hook1": "SIGLAS TECH",
+  "hookSub": "O que significa?",
+  "question": "O que significa\na\nsigla CPU?",
+  "options": [
+    {
+      "text": "Unidade Central",
+      "correct": true
+    },
+    {
+      "text": "Unidade de Força",
+      "correct": false
+    },
+    {
+      "text": "Controle de PC",
+      "correct": false
+    }
+  ],
+  "reveal": "CPU = Unidade Central.",
+  "ctaTitle": "Acertou? Comenta aí.",
+  "handleSub": "tech · produtividade · IA",
+  "fonte": "https://pt.wikipedia.org/wiki/Glossário_de_informática",
+  "dificuldade": "facil",
+  "agenda": {
+    "dia": 30,
+    "hora": 7
+  },
+  "yt": {
+    "titulo": "Siglas Tech: O que significa a sigla CPU? #Shorts",
+    "descricao": "Desafio de Hardware! Será que você acerta essa?\nDeixe seu like e inscreva-se.\n#quiz #tecnologia #hardware",
+    "tags": "quiz,tecnologia,curiosidades,hardware,aprender,desafio,shorts,conhecimento,dica,tech"
+  }
+}
