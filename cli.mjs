@@ -1,27 +1,65 @@
 #!/usr/bin/env node
 // reels-studio CLI — automatiza a produção dos Reels elucas.dev.
 //
-//   node cli.mjs new <slug> --formato lista|quiz|historia   cria content/<slug>.json
+// Cada projeto vive em projects/<slug>/ (project.json + assets/ + render/).
+//
+//   node cli.mjs new <slug> --formato lista|quiz|historia|tutorial   cria projects/<slug>/project.json
 //   node cli.mjs list                                       lista reels e status
 //   node cli.mjs validate <slug>                            checa limites de texto
-//   node cli.mjs serve [--port 5173]                        servidor do player/preview
-//   node cli.mjs render <slug> [--fps 30]                   renderiza out/<slug>.mp4
+//   node cli.mjs serve [--port 5173]                        servidor do player/preview/Studio
+//   node cli.mjs render <slug> [--fps 30]                   renderiza projects/<slug>/render/video.mp4
 //   node cli.mjs render --all                               renderiza todos
-//   node cli.mjs import <planilha.xlsx>                     aba "quizzes" -> content/*.json
+//   node cli.mjs export <slug>                              empacota o projeto num <slug>.rvs (zip)
+//   node cli.mjs import <arquivo.rvs>                       importa um .rvs para projects/<slug>/
+//   node cli.mjs import <planilha.xlsx>                     aba "quizzes" -> vários projetos
+//   node cli.mjs migrate [--dry-run]                        move content/+pastas antigas p/ projects/
 //   node cli.mjs planilha                                   gera out/publicacao.xlsx (títulos/tags p/ upload manual)
+//   node cli.mjs audio <slug>                                limpa a narração crua -> assets/narracao/limpo/
 //
 // Música: coloque .mp3/.m4a em musica/ e o render embute a trilha no MP4
 // (rotaciona entre as faixas; use --sem-musica para sair mudo).
+//
+// Tutorial (vídeos longos): grave a narração em narracao/raw/<slug>.wav,
+// rode `audio <slug>` para limpar e medir a duração, depois `render <slug>`
+// — o áudio limpo entra sincronizado com a intro (veja formato tutorial).
+// narracao/raw/<slug>.* também aceita um vídeo (mp4/mov/webm) com áudio
+// embutido — ex.: a própria gravação de câmera — e usa só a trilha de áudio.
+//
+// Câmera (opcional): defina cfg.camera = { src, position, size, trimStart }
+// no JSON para sobrepor uma bolha (PiP) da webcam durante o vídeo.
 
 import http from 'node:http';
+import https from 'node:https';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
+import zlib from 'node:zlib';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
 const cmd = args[0];
+
+// ── estrutura por projeto ────────────────────────────────────────────────────
+// Cada projeto vive numa pasta única projects/<slug>/ com project.json + assets/
+// + render/. Os caminhos gravados no JSON são RELATIVOS ao projeto (ex.:
+// "assets/gravacoes/foo.mp4"), então project.json é auto-contido e portátil (.rvs).
+const PROJECTS = path.join(ROOT, 'projects');
+const projectDir = (slug) => path.join(PROJECTS, slug);
+const projectJson = (slug) => path.join(projectDir(slug), 'project.json');
+const renderDir = (slug) => path.join(projectDir(slug), 'render');
+// subpasta (project-relative, POSIX) por tipo de asset.
+const ASSET_SUBDIR = {
+  gravacao: 'assets/gravacoes',
+  print: 'assets/prints',
+  narracao: 'assets/narracao/raw',
+  audioCena: 'assets/narracao/cenas',
+  limpo: 'assets/narracao/limpo',
+};
+const assetDir = (slug, kind) => path.join(projectDir(slug), ...ASSET_SUBDIR[kind].split('/'));
+const relAsset = (kind, filename) => ASSET_SUBDIR[kind] + '/' + filename; // grava no JSON
+const projPath = (slug, rel) => path.join(projectDir(slug), rel);          // resolve p/ disco
 
 const flag = (name, fallback) => {
   const i = args.indexOf('--' + name);
@@ -37,42 +75,289 @@ const MIME = {
   '.mjs': 'text/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
-  '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml',
-  '.mp4': 'video/mp4', '.woff2': 'font/woff2',
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp',
+  '.mp4': 'video/mp4', '.mov': 'video/quicktime', '.woff2': 'font/woff2',
+  '.wav': 'audio/wav', '.m4a': 'audio/mp4', '.mp3': 'audio/mpeg',
 };
 
 function listSlugs() {
-  return fs.readdirSync(path.join(ROOT, 'content'))
-    .filter(f => f.endsWith('.json'))
-    .map(f => f.replace(/\.json$/, ''))
+  if (!fs.existsSync(PROJECTS)) return [];
+  return fs.readdirSync(PROJECTS, { withFileTypes: true })
+    .filter(d => d.isDirectory() && fs.existsSync(path.join(PROJECTS, d.name, 'project.json')))
+    .map(d => d.name)
     .sort();
 }
 
-function createServer() {
-  return http.createServer((req, res) => {
-    const url = new URL(req.url, 'http://localhost');
-    if (url.pathname === '/api/reels') {
-      res.writeHead(200, { 'content-type': 'application/json' });
-      res.end(JSON.stringify(listSlugs()));
-      return;
-    }
-    let p = decodeURIComponent(url.pathname);
-    if (p === '/') p = '/player/player.html';
-    const file = path.join(ROOT, path.normalize(p));
-    if (!file.startsWith(ROOT) || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
-      res.writeHead(404); res.end('not found: ' + p);
-      return;
-    }
-    res.writeHead(200, { 'content-type': MIME[path.extname(file)] || 'application/octet-stream' });
-    fs.createReadStream(file).pipe(res);
+// slug simples (sem barras/traversal) usado nas rotas /api/*.
+const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/i;
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', c => chunks.push(c));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
   });
 }
 
-function serve(port) {
+function sendJson(res, status, obj) {
+  res.writeHead(status, { 'content-type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify(obj));
+}
+
+// extensões aceitas por tipo de asset (a pasta vem de assetDir(slug,kind)).
+const ASSET_KINDS = {
+  gravacao: { dir: (slug) => assetDir(slug, 'gravacao'), ext: /\.(mp4|mov|webm)$/i },
+  print: { dir: (slug) => assetDir(slug, 'print'), ext: /\.(png|jpg|jpeg|webp)$/i },
+  // aceita áudio puro ou um vídeo com áudio embutido (ex.: a própria gravação de câmera).
+  narracao: { dir: (slug) => assetDir(slug, 'narracao'), ext: /\.(wav|mp3|m4a|aac|ogg|mp4|mov|webm)$/i },
+  // takes de narração por cena (nomeados pelo scene.id, nunca por índice — reordenar não órfã áudio).
+  audioCena: { dir: (slug) => assetDir(slug, 'audioCena'), ext: /\.(wav|mp3|m4a|aac|ogg|webm)$/i },
+};
+
+function listAssets(slug) {
+  const rel = (abs) => path.relative(projectDir(slug), abs).replace(/\\/g, '/');
+  const listDir = (dir, extRe) => fs.existsSync(dir)
+    ? fs.readdirSync(dir).filter(f => extRe.test(f)).sort().map(f => rel(path.join(dir, f)))
+    : [];
+  const raw = findRawNarracao(slug);
+  const limpo = path.join(assetDir(slug, 'limpo'), slug + '.m4a');
+  return {
+    gravacoes: listDir(ASSET_KINDS.gravacao.dir(slug), ASSET_KINDS.gravacao.ext),
+    prints: listDir(ASSET_KINDS.print.dir(slug), ASSET_KINDS.print.ext),
+    audioCenas: listDir(ASSET_KINDS.audioCena.dir(slug), ASSET_KINDS.audioCena.ext),
+    narracaoRaw: raw ? rel(raw) : null,
+    narracaoLimpo: fs.existsSync(limpo) ? rel(limpo) : null,
+  };
+}
+
+// progresso de renders disparados pelo Studio (POST /api/render/:slug), em memória.
+const renderStatus = new Map();
+
+// Rotas do Studio (UI local de montagem de tutoriais). Tudo sob /api/*;
+// qualquer outro caminho cai no handler estático abaixo.
+async function handleApi(req, res, url) {
+  const m = (re) => { const r = re.exec(url.pathname); return r; };
+
+  if (url.pathname === '/api/reels') {
+    return sendJson(res, 200, listSlugs());
+  }
+
+  // lista todos os projetos com seu formato (o Studio filtra/busca na UI).
+  if (url.pathname === '/api/projects') {
+    const items = listSlugs().map((slug) => {
+      try { return { slug, formato: JSON.parse(fs.readFileSync(projectJson(slug), 'utf8')).formato || '?' }; }
+      catch { return { slug, formato: '?' }; }
+    });
+    return sendJson(res, 200, items);
+  }
+
+  // lista só os slugs tutorial. Usado pelo ping() do sync (detecção de conexão);
+  // a lista completa multi-formato vem de /api/projects.
+  if (url.pathname === '/api/tutorials') {
+    const slugs = listSlugs().filter((slug) => {
+      try { return JSON.parse(fs.readFileSync(projectJson(slug), 'utf8')).formato === 'tutorial'; }
+      catch { return false; }
+    });
+    return sendJson(res, 200, slugs);
+  }
+
+  let r;
+  if ((r = m(/^\/api\/skeleton\/([a-z]+)$/))) {
+    const skeleton = SKELETONS[r[1]];
+    return skeleton ? sendJson(res, 200, skeleton) : sendJson(res, 404, { error: 'formato desconhecido' });
+  }
+
+  if ((r = m(/^\/api\/tutorial\/([a-z0-9-]+)$/i))) {
+    const slug = r[1];
+    if (!SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });
+    const file = projectJson(slug);
+    if (req.method === 'GET') {
+      if (!fs.existsSync(file)) return sendJson(res, 404, { error: 'não encontrado' });
+      return sendJson(res, 200, JSON.parse(fs.readFileSync(file, 'utf8')));
+    }
+    if (req.method === 'POST') {
+      let cfg;
+      try { cfg = JSON.parse((await readBody(req)).toString('utf8')); }
+      catch { return sendJson(res, 400, { error: 'JSON inválido' }); }
+      const warns = validate(slug, cfg);
+      fs.mkdirSync(projectDir(slug), { recursive: true });
+      fs.writeFileSync(file, JSON.stringify(cfg, null, 2) + '\n');
+      return sendJson(res, 200, { ok: true, warns });
+    }
+  }
+
+  if ((r = m(/^\/api\/assets\/([a-z0-9-]+)$/i)) && req.method === 'GET') {
+    const slug = r[1];
+    if (!SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });
+    return sendJson(res, 200, listAssets(slug));
+  }
+
+  if ((r = m(/^\/api\/assets\/([a-z0-9-]+)\/(gravacao|print|narracao|audioCena)\/([^/]+)$/i)) && req.method === 'PUT') {
+    const [, slug, kind, filenameRaw] = r;
+    if (!SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });
+    const filename = path.basename(decodeURIComponent(filenameRaw));
+    const spec = ASSET_KINDS[kind];
+    if (!spec.ext.test(filename)) return sendJson(res, 400, { error: `extensão não aceita para ${kind}` });
+    const dir = spec.dir(slug);
+    fs.mkdirSync(dir, { recursive: true });
+    // narracao: um arquivo cru por slug — normaliza o nome para <slug>.<ext>, sobrescrevendo o anterior.
+    const finalName = kind === 'narracao' ? slug + path.extname(filename).toLowerCase() : filename;
+    const body = await readBody(req);
+    fs.writeFileSync(path.join(dir, finalName), body);
+    return sendJson(res, 200, { ok: true, path: relAsset(kind, finalName) });
+  }
+
+  if ((r = m(/^\/api\/audio\/([a-z0-9-]+)$/i)) && req.method === 'POST') {
+    const slug = r[1];
+    if (!SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });
+    try {
+      const narracao = await cleanNarration(slug);
+      return sendJson(res, 200, { ok: true, ...narracao });
+    } catch (e) {
+      return sendJson(res, 500, { error: String(e.message || e) });
+    }
+  }
+
+  // importa a planilha de quizzes (corpo = bytes do .xlsx/.csv) — cria vários projetos.
+  if (url.pathname === '/api/import-planilha' && req.method === 'POST') {
+    try {
+      const { total, ok, bad, slugs } = await importPlanilha(await readBody(req));
+      return sendJson(res, 200, { ok: true, total, okCount: ok, warns: bad, slugs });
+    } catch (e) {
+      return sendJson(res, 500, { error: String(e.message || e) });
+    }
+  }
+
+  // importa um .rvs (corpo = bytes do zip) para projects/<slug>/. ?slug=<slug>&overwrite=1
+  if (url.pathname === '/api/import' && req.method === 'POST') {
+    const slug = url.searchParams.get('slug');
+    if (!slug || !SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });
+    if (fs.existsSync(projectDir(slug)) && url.searchParams.get('overwrite') !== '1') {
+      return sendJson(res, 409, { error: `projects/${slug}/ já existe` });
+    }
+    try {
+      const entries = zipRead(await readBody(req));
+      for (const e of entries) {
+        const to = path.join(projectDir(slug), e.name);
+        if (!to.startsWith(projectDir(slug))) continue; // anti-traversal
+        fs.mkdirSync(path.dirname(to), { recursive: true });
+        fs.writeFileSync(to, e.data);
+      }
+      const cfg = JSON.parse(fs.readFileSync(projectJson(slug), 'utf8'));
+      return sendJson(res, 200, { ok: true, slug, formato: cfg.formato || '?' });
+    } catch (e) {
+      return sendJson(res, 500, { error: String(e.message || e) });
+    }
+  }
+
+  // limpa o take de UMA cena (gravado pelo Studio) e devolve {src, duracaoSegundos}.
+  if ((r = m(/^\/api\/audio-cena\/([a-z0-9-]+)\/([a-z0-9-]+)$/i)) && req.method === 'POST') {
+    const [, slug, sceneId] = r;
+    if (!SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });
+    try {
+      const audio = await cleanSceneAudio(slug, sceneId, { trim: url.searchParams.get('trim') !== '0' });
+      return sendJson(res, 200, { ok: true, ...audio });
+    } catch (e) {
+      return sendJson(res, 500, { error: String(e.message || e) });
+    }
+  }
+
+  if ((r = m(/^\/api\/render\/([a-z0-9-]+)\/status$/i)) && req.method === 'GET') {
+    return sendJson(res, 200, renderStatus.get(r[1]) || { state: 'idle' });
+  }
+
+  if ((r = m(/^\/api\/render\/([a-z0-9-]+)$/i)) && req.method === 'POST') {
+    const slug = r[1];
+    if (!SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });
+    const current = renderStatus.get(slug);
+    if (current && current.state === 'running') return sendJson(res, 409, { error: 'já renderizando' });
+    renderStatus.set(slug, { state: 'running', frame: 0, total: 0 });
+    const port = req.socket.localPort;
+    renderOne(slug, {
+      port,
+      onProgress: ({ frame, total }) => renderStatus.set(slug, { state: 'running', frame, total }),
+    })
+      .then(() => renderStatus.set(slug, { state: 'done', frame: 1, total: 1 }))
+      .catch((e) => renderStatus.set(slug, { state: 'error', error: String(e.message || e) }));
+    return sendJson(res, 202, { ok: true });
+  }
+
+  return sendJson(res, 404, { error: 'rota desconhecida' });
+}
+
+function requestHandler(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  if (url.pathname.startsWith('/api/')) {
+    handleApi(req, res, url).catch((e) => sendJson(res, 500, { error: String(e.message || e) }));
+    return;
+  }
+  let p = decodeURIComponent(url.pathname);
+  if (p === '/') p = '/player/player.html';
+  else if (p.endsWith('/')) p += 'index.html';
+  const file = path.join(ROOT, path.normalize(p));
+  if (!file.startsWith(ROOT) || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
+    res.writeHead(404); res.end('not found: ' + p);
+    return;
+  }
+  const type = MIME[path.extname(file)] || 'application/octet-stream';
+  const size = fs.statSync(file).size;
+  // Range requests: o <video> do Chrome exige isso pra reportar um range
+  // "seekable" além do byte 0 — sem isso, seek em vídeo trava sempre em t=0
+  // (fundamental pro formato tutorial, que faz seek frame-a-frame no export).
+  const range = req.headers.range;
+  if (range) {
+    const m = /bytes=(\d*)-(\d*)/.exec(range);
+    const start = m && m[1] ? parseInt(m[1], 10) : 0;
+    const end = m && m[2] ? parseInt(m[2], 10) : size - 1;
+    if (start >= size || end >= size || start > end) {
+      res.writeHead(416, { 'content-range': `bytes */${size}` });
+      res.end();
+      return;
+    }
+    res.writeHead(206, {
+      'content-type': type, 'accept-ranges': 'bytes',
+      'content-range': `bytes ${start}-${end}/${size}`,
+      'content-length': end - start + 1,
+    });
+    fs.createReadStream(file, { start, end }).pipe(res);
+    return;
+  }
+  res.writeHead(200, { 'content-type': type, 'accept-ranges': 'bytes', 'content-length': size });
+  fs.createReadStream(file).pipe(res);
+}
+
+function createServer() {
+  return http.createServer(requestHandler);
+}
+
+// certs/cert.pem + certs/key.pem (gerados uma vez com mkcert, gitignored):
+// se existirem, `serve` sobe em HTTPS e escuta em todas as interfaces (não só
+// 127.0.0.1) — é o que permite o celular acessar o Studio pela rede local pra
+// sincronizar/instalar o PWA. Sem certs, comportamento de sempre: HTTP só em localhost.
+function httpsOptions() {
+  const certFile = path.join(ROOT, 'certs', 'cert.pem');
+  const keyFile = path.join(ROOT, 'certs', 'key.pem');
+  if (!fs.existsSync(certFile) || !fs.existsSync(keyFile)) return null;
+  return { cert: fs.readFileSync(certFile), key: fs.readFileSync(keyFile) };
+}
+
+function serve(port, { network = false } = {}) {
   return new Promise((resolve) => {
-    const srv = createServer();
-    srv.listen(port, '127.0.0.1', () => resolve(srv));
+    const tls = network ? httpsOptions() : null;
+    const srv = tls ? https.createServer(tls, requestHandler) : createServer();
+    srv.listen(port, tls ? undefined : '127.0.0.1', () => resolve(srv));
   });
+}
+
+// IP da LAN pra mostrar a URL que o celular deve acessar (/studio/).
+function lanIp() {
+  for (const ifaces of Object.values(os.networkInterfaces())) {
+    for (const i of ifaces || []) {
+      if (i.family === 'IPv4' && !i.internal) return i.address;
+    }
+  }
+  return null;
 }
 
 // ── validação (limites do guia da marca) ─────────────────────────────────────
@@ -110,14 +395,52 @@ function validate(slug, cfg) {
       check(`sections[${i}].punch`, s.punch, 30);
     }
     check('cta.title', cfg.cta?.title, 24);
+  } else if (cfg.formato === 'tutorial') {
+    const n = cfg.scenes?.length ?? 0;
+    if (n < 1) warns.push('scenes: 0 cenas (use pelo menos 1)');
+    const bodyDur = cfg.narracao?.duracaoSegundos || 0;
+    const SCENE_TYPES = ['video', 'image', 'passo', 'codigo', 'camera-intro'];
+    const SCENE_LAYOUTS = ['desktop', 'celular', 'callout', 'raw'];
+    const hasSceneAudio = (cfg.scenes || []).some(s => s.audio?.src);
+    for (const [i, s] of (cfg.scenes || []).entries()) {
+      if (!s.type || !SCENE_TYPES.includes(s.type)) warns.push(`scenes[${i}].type: "${s.type}" inválido (use video, image, passo, codigo ou camera-intro)`);
+      if (['video', 'image'].includes(s.type) && !s.src) warns.push(`scenes[${i}].src: obrigatório para type=${s.type}`);
+      if (s.layout && !SCENE_LAYOUTS.includes(s.layout)) warns.push(`scenes[${i}].layout: "${s.layout}" inválido (use desktop, celular, callout ou raw)`);
+      if (s.audio && !s.audio.src) warns.push(`scenes[${i}].audio.src: obrigatório quando "audio" está presente`);
+      if (s.camera && !s.camera.src) warns.push(`scenes[${i}].camera.src: obrigatório quando "camera" está presente`);
+      const start = +s.start || 0, end = +s.end || 0;
+      if (end <= start) warns.push(`scenes[${i}]: end (${end}) deve ser maior que start (${start})`);
+      if (bodyDur && end > bodyDur) warns.push(`scenes[${i}].end (${end}) ultrapassa a duração da narração (${bodyDur}s)`);
+      check(`scenes[${i}].caption`, s.caption, 60);
+    }
+    if (hasSceneAudio) {
+      // narração por cena: a duração do corpo é a soma das cenas (end da última).
+      const lastEnd = Math.max(0, ...(cfg.scenes || []).map(s => +s.end || 0));
+      if (bodyDur && Math.abs(bodyDur - lastEnd) > 0.05) {
+        warns.push(`narracao.duracaoSegundos (${bodyDur}) difere do fim da última cena (${lastEnd}) — com áudio por cena, a soma das cenas manda`);
+      }
+    } else if (!bodyDur) {
+      warns.push('narracao.duracaoSegundos: ausente — rode `node cli.mjs audio <slug>` ou informe manualmente');
+    }
+    if (cfg.outro?.media) {
+      const md = cfg.outro.media;
+      if (!['celular', 'desktop', 'ambos'].includes(md.tipo)) warns.push(`outro.media.tipo: "${md.tipo}" inválido (use celular, desktop ou ambos)`);
+      if (md.tipo !== 'desktop' && !md.srcCelular) warns.push('outro.media.srcCelular: obrigatório para tipo celular/ambos');
+      if (md.tipo !== 'celular' && !md.srcDesktop) warns.push('outro.media.srcDesktop: obrigatório para tipo desktop/ambos');
+    }
+    if (cfg.camera) {
+      if (!cfg.camera.src) warns.push('camera.src: obrigatório quando "camera" está presente');
+      const pos = cfg.camera.position || 'bottom-right';
+      if (!['bottom-right', 'bottom-left', 'top-right', 'top-left'].includes(pos)) warns.push(`camera.position: "${pos}" inválido (use bottom-right/bottom-left/top-right/top-left)`);
+    }
   }
   return warns;
 }
 
 function loadCfg(slug) {
-  const file = path.join(ROOT, 'content', slug + '.json');
+  const file = projectJson(slug);
   if (!fs.existsSync(file)) {
-    console.error(`✗ content/${slug}.json não existe. Reels disponíveis: ${listSlugs().join(', ')}`);
+    console.error(`✗ projects/${slug}/project.json não existe. Reels disponíveis: ${listSlugs().join(', ')}`);
     process.exit(1);
   }
   return JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -130,7 +453,7 @@ const CHROME_PATHS = [
   process.env.LOCALAPPDATA + '\\Google\\Chrome\\Application\\chrome.exe',
 ];
 
-async function renderOne(slug, { fps = 30, port }) {
+async function renderOne(slug, { fps = 30, port, onProgress }) {
   const cfg = loadCfg(slug);
   const warns = validate(slug, cfg);
   for (const w of warns) console.warn('  ⚠ ' + w);
@@ -148,8 +471,10 @@ async function renderOne(slug, { fps = 30, port }) {
   });
   try {
     const page = await browser.newPage();
-    // 1920 do canvas + 44 da barra de playback ⇒ Stage fica em escala 1:1
-    await page.setViewport({ width: 1080, height: 1964, deviceScaleFactor: 1 });
+    // tutorial é paisagem (1920x1080); os demais formatos são retrato (1080x1920).
+    // +44 da barra de playback do player ⇒ Stage fica em escala 1:1 (captura nítida).
+    const landscape = cfg.formato === 'tutorial';
+    await page.setViewport(landscape ? { width: 1920, height: 1124, deviceScaleFactor: 1 } : { width: 1080, height: 1964, deviceScaleFactor: 1 });
     await page.goto(`http://127.0.0.1:${port}/player/player.html?reel=${encodeURIComponent(slug)}`, { waitUntil: 'networkidle0' });
     await page.waitForFunction('window.__REEL_READY === true || window.__REEL_ERROR', { timeout: 30000 });
     const err = await page.evaluate('window.__REEL_ERROR');
@@ -166,8 +491,8 @@ async function renderOne(slug, { fps = 30, port }) {
     const totalFrames = Math.round(meta.duration * fps);
     console.log(`  ${slug}: ${meta.duration}s · ${fps}fps · ${totalFrames} frames · canvas ${meta.rect.width}x${meta.rect.height}`);
 
-    const outFile = path.join(ROOT, 'out', slug + '.mp4');
-    fs.mkdirSync(path.join(ROOT, 'out'), { recursive: true });
+    const outFile = path.join(renderDir(slug), 'video.mp4');
+    fs.mkdirSync(renderDir(slug), { recursive: true });
     const ff = spawn(ffmpegPath, [
       '-y', '-f', 'image2pipe', '-framerate', String(fps), '-i', '-',
       '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-preset', 'medium',
@@ -177,7 +502,7 @@ async function renderOne(slug, { fps = 30, port }) {
     ff.stderr.on('data', d => { ffErr += d; });
     const ffDone = new Promise((res, rej) => ff.on('close', c => c === 0 ? res() : rej(new Error('ffmpeg exit ' + c + '\n' + ffErr.slice(-2000)))));
 
-    const clip = { x: meta.rect.x, y: meta.rect.y, width: 1080, height: 1920 };
+    const clip = { x: meta.rect.x, y: meta.rect.y, width: meta.rect.width, height: meta.rect.height };
     const started = Date.now();
     for (let i = 0; i < totalFrames; i++) {
       const t = i / fps;
@@ -185,34 +510,118 @@ async function renderOne(slug, { fps = 30, port }) {
         const svg = document.querySelector('svg[data-om-exportable-video-with-duration-secs]');
         svg.dispatchEvent(new CustomEvent('data-om-seek-to-time-frame', { detail: { time, sync: true } }));
       }, t);
+      // cenas com <video> (formato tutorial) precisam decodificar o frame buscado
+      // antes do screenshot, senão capturam frames borrados/atrasados/parados.
+      // Checa video.seeking (não readyState — esse fica sempre "pronto" depois
+      // do primeiro frame e faria a espera virar um no-op nos frames seguintes).
+      await page.evaluate(() => {
+        const videos = document.querySelectorAll('video');
+        if (!videos.length) return Promise.resolve();
+        return Promise.race([
+          Promise.all(Array.from(videos).map(v => !v.seeking ? null : new Promise(res => {
+            v.addEventListener('seeked', res, { once: true });
+          }))),
+          new Promise(res => setTimeout(res, 200)),
+        ]);
+      });
       const png = await page.screenshot({ clip, type: 'png', optimizeForSpeed: true });
       if (!ff.stdin.write(png)) await new Promise(r => ff.stdin.once('drain', r));
       if (i % fps === 0) process.stdout.write(`\r  frame ${i}/${totalFrames} (${Math.round(i / totalFrames * 100)}%)`);
+      if (onProgress) onProgress({ frame: i, total: totalFrames });
     }
     ff.stdin.end();
     await ffDone;
+    if (onProgress) onProgress({ frame: totalFrames, total: totalFrames });
 
-    // trilha sonora: embute uma faixa de musica/ (rotaciona pela ordem dos slugs)
-    if (!hasFlag('sem-musica')) {
-      const track = pickTrack(slug);
-      if (track) {
+    // narração (formato tutorial): mux do áudio limpo, atrasado pelo tempo da intro.
+    // narração por cena: se alguma cena tem take próprio, monta narracao/limpo/<slug>.m4a
+    // a partir dos takes (cada um no seu start) — o mux abaixo consome sem mudanças.
+    const hasSceneAudio = cfg.formato === 'tutorial' && (cfg.scenes || []).some(s => s.audio?.src);
+    if (hasSceneAudio) {
+      const limpo = await buildSceneNarration(slug, cfg, ffmpegPath);
+      cfg.narracao = { ...(cfg.narracao || {}), limpo };
+    }
+    const temNarracao = cfg.formato === 'tutorial' && cfg.narracao?.limpo;
+    if (temNarracao) {
+      const introDur = cfg.intro?.duracao ?? 2.4;
+      const narracaoFile = projPath(slug, cfg.narracao.limpo);
+      if (!fs.existsSync(narracaoFile)) {
+        console.warn(`  ⚠ ${cfg.narracao.limpo} não encontrado — rode "node cli.mjs audio ${slug}" antes de renderizar`);
+      } else {
         const tmp = outFile.replace(/\.mp4$/, '.tmp.mp4');
+        const introMs = Math.round(introDur * 1000);
+        // sem -shortest: o vídeo (com intro+corpo+outro) manda na duração final;
+        // a narração termina antes do outro e o restante fica em silêncio.
         await run(ffmpegPath, [
-          '-y', '-i', outFile, '-stream_loop', '-1', '-i', track,
-          '-map', '0:v', '-map', '1:a', '-c:v', 'copy',
-          '-c:a', 'aac', '-b:a', '128k',
-          '-af', 'volume=0.9,afade=t=out:st=' + Math.max(0, meta.duration - 1.2) + ':d=1.2',
+          '-y', '-i', outFile, '-i', narracaoFile,
+          '-filter_complex', `[1:a]adelay=${introMs}|${introMs}[a1]`,
+          '-map', '0:v', '-map', '[a1]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k',
           '-t', String(meta.duration), '-movflags', '+faststart', tmp,
         ]);
         fs.renameSync(tmp, outFile);
       }
     }
 
+    // trilha sonora: embute uma faixa de musica/ (rotaciona pela ordem dos slugs).
+    // Com narração, mixa a música baixinho por baixo em vez de substituir o áudio.
+    if (!hasFlag('sem-musica')) {
+      const track = pickTrack(slug);
+      if (track) {
+        const tmp = outFile.replace(/\.mp4$/, '.tmp.mp4');
+        if (temNarracao) {
+          await run(ffmpegPath, [
+            '-y', '-i', outFile, '-stream_loop', '-1', '-i', track,
+            '-filter_complex',
+            // apad: a narração termina antes do outro (sem áudio); preenche com
+            // silêncio até o fim, senão o amix corta no fim da narração.
+            `[0:a]apad[a0];[1:a]volume=0.18,afade=t=out:st=${Math.max(0, meta.duration - 1.2)}:d=1.2[bg];[a0][bg]amix=inputs=2:duration=first:dropout_transition=0[a]`,
+            '-map', '0:v', '-map', '[a]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k',
+            '-t', String(meta.duration), '-movflags', '+faststart', tmp,
+          ]);
+        } else {
+          await run(ffmpegPath, [
+            '-y', '-i', outFile, '-stream_loop', '-1', '-i', track,
+            '-map', '0:v', '-map', '1:a', '-c:v', 'copy',
+            '-c:a', 'aac', '-b:a', '128k',
+            '-af', 'volume=0.9,afade=t=out:st=' + Math.max(0, meta.duration - 1.2) + ':d=1.2',
+            '-t', String(meta.duration), '-movflags', '+faststart', tmp,
+          ]);
+        }
+        fs.renameSync(tmp, outFile);
+      }
+    }
+
+    await makeThumbnail(slug, cfg, meta, ffmpegPath);
+
     const secs = ((Date.now() - started) / 1000).toFixed(0);
     const mb = (fs.statSync(outFile).size / 1048576).toFixed(1);
-    console.log(`\r  ✓ out/${slug}.mp4 — ${mb} MB, renderizado em ${secs}s          `);
+    console.log(`\r  ✓ projects/${slug}/render/video.mp4 — ${mb} MB, renderizado em ${secs}s          `);
   } finally {
     await browser.close();
+  }
+}
+
+// Gera out/<slug>.jpg após o render. Editável via content/<slug>.json:
+//   "thumbnail": { "tempo": 2.5 }   → captura o frame nesse segundo
+//   "thumbnail": { "src": "assets/prints/capa.png" } → usa uma imagem própria
+// Sem o campo, captura um frame representativo (após a intro, se houver).
+async function makeThumbnail(slug, cfg, meta, ffmpegPath) {
+  const outJpg = path.join(renderDir(slug), 'thumb.jpg');
+  const outMp4 = path.join(renderDir(slug), 'video.mp4');
+  const thumb = cfg.thumbnail || {};
+  try {
+    if (thumb.src) {
+      const srcAbs = projPath(slug, thumb.src);
+      if (!fs.existsSync(srcAbs)) { console.warn(`  ⚠ thumbnail.src não encontrado: ${thumb.src}`); return; }
+      await run(ffmpegPath, ['-y', '-i', srcAbs, '-vf', 'scale=640:-2', '-frames:v', '1', outJpg]);
+    } else {
+      const introDur = cfg.formato === 'tutorial' ? (cfg.intro?.duracao ?? 2.4) : 0;
+      const t = thumb.tempo != null ? +thumb.tempo
+        : Math.min(meta.duration - 0.1, introDur + 0.6); // logo depois da intro / do gancho
+      await run(ffmpegPath, ['-y', '-ss', String(Math.max(0, t)), '-i', outMp4, '-frames:v', '1', '-q:v', '3', '-vf', 'scale=640:-2', outJpg]);
+    }
+  } catch (e) {
+    console.warn(`  ⚠ não gerou thumbnail: ${String(e.message || e).split('\n')[0]}`);
   }
 }
 
@@ -236,6 +645,232 @@ function pickTrack(slug) {
   if (!tracks.length) return null;
   const i = listSlugs().indexOf(slug);
   return tracks[(i >= 0 ? i : 0) % tracks.length];
+}
+
+// Mede a duração (segundos) de um arquivo de mídia lendo o stderr do ffmpeg.
+function probeDuration(ffmpegPath, file) {
+  return new Promise((res) => {
+    const p = spawn(ffmpegPath, ['-i', file]);
+    let e = ''; p.stderr.on('data', d => e += d);
+    p.on('close', () => {
+      const m = /Duration: (\d+):(\d+):([\d.]+)/.exec(e);
+      res(m ? (+m[1] * 3600 + +m[2] * 60 + +m[3]) : 15);
+    });
+  });
+}
+
+// Localiza narracao/raw/<slug>.<ext> — aceita áudio puro (wav/mp3/m4a/aac/ogg)
+// ou um vídeo com áudio embutido (mp4/mov/webm — ex.: gravação de câmera),
+// caso em que só a trilha de áudio é aproveitada (veja cleanNarration).
+function findRawNarracao(slug) {
+  const dir = assetDir(slug, 'narracao');
+  if (!fs.existsSync(dir)) return null;
+  // após a migração o raw é <slug>.<ext>; aceita qualquer basename por robustez.
+  const file = fs.readdirSync(dir).find(f => /\.(wav|mp3|m4a|aac|ogg|mp4|mov|webm)$/i.test(f));
+  return file ? path.join(dir, file) : null;
+}
+
+// Limpa a narração crua de <slug> (corte de silêncio nas pontas, noise gate,
+// highpass, normalização de volume — filtros nativos do ffmpeg, sem depender
+// de perfil de ruído) e grava narracao/limpo/<slug>.m4a. Se o arquivo cru for
+// um vídeo (ex.: gravação de câmera), descarta a imagem e usa só o áudio.
+// Atualiza content/<slug>.json com narracao{raw,limpo,duracaoSegundos}. Usado
+// tanto pelo comando `audio` quanto pela rota /api/audio/:slug do Studio.
+// Cadeia de filtros compartilhada pela narração global e pelos takes por cena:
+// corte de silêncio nas pontas, highpass, noise gate e normalização de volume.
+const NARRACAO_AF = (() => {
+  const silenceTrim = 'silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.1:detection=peak,areverse,'
+    + 'silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.1:detection=peak,areverse';
+  return `${silenceTrim},highpass=f=80,agate=threshold=-40dB:ratio=4:attack=5:release=80,loudnorm=I=-16:TP=-1.5:LRA=11`;
+})();
+// variante sem corte de silêncio — usada quando o take tem vídeo de câmera
+// junto (o áudio precisa manter a duração exata do vídeo).
+const NARRACAO_AF_SEM_TRIM = 'highpass=f=80,agate=threshold=-40dB:ratio=4:attack=5:release=80,loudnorm=I=-16:TP=-1.5:LRA=11';
+
+async function cleanNarration(slug) {
+  const ffmpegPath = path.join(ROOT, 'tools', 'ffmpeg.exe');
+  const raw = findRawNarracao(slug);
+  if (!raw) throw new Error(`narracao/raw/${slug}.* não encontrado (áudio: wav/mp3/m4a/aac/ogg — ou vídeo com áudio: mp4/mov/webm)`);
+  const limpoRel = relAsset('limpo', slug + '.m4a');
+  const limpoAbs = projPath(slug, limpoRel);
+  fs.mkdirSync(path.dirname(limpoAbs), { recursive: true });
+  // -vn: descarta qualquer trilha de vídeo do arquivo cru (câmera) — só o áudio importa aqui.
+  await run(ffmpegPath, ['-y', '-i', raw, '-vn', '-af', NARRACAO_AF, '-c:a', 'aac', '-b:a', '192k', limpoAbs]);
+  const duracaoSegundos = +(await probeDuration(ffmpegPath, limpoAbs)).toFixed(2);
+  const cfgFile = projectJson(slug);
+  const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
+  cfg.narracao = { raw: path.relative(projectDir(slug), raw).replace(/\\/g, '/'), limpo: limpoRel, duracaoSegundos };
+  fs.writeFileSync(cfgFile, JSON.stringify(cfg, null, 2) + '\n');
+  return cfg.narracao;
+}
+
+// Limpa um take de narração de UMA cena (narracao/cenas/<slug>/<sceneId>.<ext>
+// cru → <sceneId>.m4a limpo) com a mesma cadeia de filtros da narração global.
+// Limpar por take (e não o concatenado) equaliza volume entre takes gravados em
+// momentos diferentes e o silenceremove encurta exatamente a cena certa.
+// Não escreve o content JSON — quem chama (o Studio) é o dono do cfg.
+// trim=false (take gravado COM câmera): pula o silenceremove para o áudio
+// limpo manter exatamente a duração do vídeo do take — senão a bolha PiP
+// da cena desalinha da narração.
+async function cleanSceneAudio(slug, sceneId, { trim = true } = {}) {
+  const ffmpegPath = path.join(ROOT, 'tools', 'ffmpeg.exe');
+  const dir = ASSET_KINDS.audioCena.dir(slug);
+  const raw = fs.existsSync(dir)
+    ? fs.readdirSync(dir).find(f => f.replace(/\.[^.]+$/, '') === sceneId && ASSET_KINDS.audioCena.ext.test(f) && !f.endsWith('.m4a'))
+    : null;
+  if (!raw) throw new Error(`narracao/cenas/${slug}/${sceneId}.* não encontrado`);
+  const limpoAbs = path.join(dir, sceneId + '.m4a');
+  const af = trim ? NARRACAO_AF : NARRACAO_AF_SEM_TRIM;
+  await run(ffmpegPath, ['-y', '-i', path.join(dir, raw), '-vn', '-af', af, '-c:a', 'aac', '-b:a', '192k', limpoAbs]);
+  const duracaoSegundos = +(await probeDuration(ffmpegPath, limpoAbs)).toFixed(2);
+  return { src: relAsset('audioCena', sceneId + '.m4a'), duracaoSegundos };
+}
+
+// Monta a narração final a partir dos takes por cena: cada take entra no seu
+// scenes[].start (relativo ao início do corpo) via adelay, misturado sobre uma
+// base de silêncio com a duração do corpo. normalize=0 é essencial — o padrão
+// do amix divide o volume pelo número de entradas. Gera narracao/limpo/<slug>.m4a,
+// que o mux existente do render consome sem nenhuma mudança.
+async function buildSceneNarration(slug, cfg, ffmpegPath) {
+  const takes = (cfg.scenes || [])
+    .filter(s => s.audio?.src)
+    .map(s => ({ file: projPath(slug, s.audio.src), start: +s.start || 0 }));
+  if (!takes.length) throw new Error('nenhuma cena com audio.src');
+  for (const t of takes) if (!fs.existsSync(t.file)) throw new Error(`take não encontrado: ${path.relative(projectDir(slug), t.file)}`);
+  const bodyDur = Math.max(cfg.narracao?.duracaoSegundos || 0, ...(cfg.scenes || []).map(s => +s.end || 0));
+  const limpoRel = relAsset('limpo', slug + '.m4a');
+  const limpoAbs = projPath(slug, limpoRel);
+  fs.mkdirSync(path.dirname(limpoAbs), { recursive: true });
+  const inputs = takes.flatMap(t => ['-i', t.file]);
+  const delays = takes.map((t, i) => {
+    const ms = Math.round(t.start * 1000);
+    return `[${i}:a]adelay=${ms}|${ms}[a${i}]`;
+  });
+  const mixIn = takes.map((_, i) => `[a${i}]`).join('');
+  const fc = `anullsrc=r=48000:cl=stereo:d=${bodyDur.toFixed(2)}[base];${delays.join(';')};`
+    + `[base]${mixIn}amix=inputs=${takes.length + 1}:duration=first:normalize=0[a]`;
+  await run(ffmpegPath, ['-y', ...inputs, '-filter_complex', fc, '-map', '[a]', '-c:a', 'aac', '-b:a', '192k', limpoAbs]);
+  return limpoRel;
+}
+
+// ── .rvs (zip do projeto) + migração ─────────────────────────────────────────
+// .rvs é um zip com o projeto na raiz (project.json + assets/ + render/).
+// Escrevemos STORED (sem compressão — a mídia já é comprimida); a leitura
+// aceita STORED e DEFLATE (o export do Studio usa deflate via CompressionStream).
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t;
+})();
+function crc32(buf) { let c = 0xFFFFFFFF; for (let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+
+function zipWrite(entries) { // entries: [{ name, data: Buffer }]
+  const parts = [], central = []; let offset = 0;
+  for (const e of entries) {
+    const name = Buffer.from(e.name, 'utf8'), data = e.data, crc = crc32(data);
+    const lh = Buffer.alloc(30);
+    lh.writeUInt32LE(0x04034b50, 0); lh.writeUInt16LE(20, 4); lh.writeUInt16LE(0, 6); lh.writeUInt16LE(0, 8);
+    lh.writeUInt16LE(0, 10); lh.writeUInt16LE(0, 12); lh.writeUInt32LE(crc, 14);
+    lh.writeUInt32LE(data.length, 18); lh.writeUInt32LE(data.length, 22); lh.writeUInt16LE(name.length, 26); lh.writeUInt16LE(0, 28);
+    parts.push(lh, name, data);
+    const cd = Buffer.alloc(46);
+    cd.writeUInt32LE(0x02014b50, 0); cd.writeUInt16LE(20, 4); cd.writeUInt16LE(20, 6); cd.writeUInt16LE(0, 8); cd.writeUInt16LE(0, 10);
+    cd.writeUInt16LE(0, 12); cd.writeUInt16LE(0, 14); cd.writeUInt32LE(crc, 16); cd.writeUInt32LE(data.length, 20); cd.writeUInt32LE(data.length, 24);
+    cd.writeUInt16LE(name.length, 28); cd.writeUInt32LE(offset, 42);
+    central.push(cd, name);
+    offset += lh.length + name.length + data.length;
+  }
+  const cdSize = central.reduce((n, b) => n + b.length, 0);
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0); eocd.writeUInt16LE(entries.length, 8); eocd.writeUInt16LE(entries.length, 10);
+  eocd.writeUInt32LE(cdSize, 12); eocd.writeUInt32LE(offset, 16);
+  return Buffer.concat([...parts, ...central, eocd]);
+}
+
+function zipRead(buf) {
+  let i = buf.length - 22;
+  while (i >= 0 && buf.readUInt32LE(i) !== 0x06054b50) i--;
+  if (i < 0) throw new Error('.rvs inválido (EOCD não encontrado)');
+  const count = buf.readUInt16LE(i + 10); let off = buf.readUInt32LE(i + 16);
+  const out = [];
+  for (let n = 0; n < count; n++) {
+    if (buf.readUInt32LE(off) !== 0x02014b50) throw new Error('.rvs inválido (central dir)');
+    const method = buf.readUInt16LE(off + 10), compSize = buf.readUInt32LE(off + 20);
+    const nameLen = buf.readUInt16LE(off + 28), extraLen = buf.readUInt16LE(off + 30), commLen = buf.readUInt16LE(off + 32);
+    const lho = buf.readUInt32LE(off + 42);
+    const name = buf.toString('utf8', off + 46, off + 46 + nameLen);
+    const lNameLen = buf.readUInt16LE(lho + 26), lExtra = buf.readUInt16LE(lho + 28);
+    const dataStart = lho + 30 + lNameLen + lExtra;
+    const comp = buf.subarray(dataStart, dataStart + compSize);
+    out.push({ name, data: method === 8 ? zlib.inflateRawSync(comp) : Buffer.from(comp) });
+    off += 46 + nameLen + extraLen + commLen;
+  }
+  return out;
+}
+
+// Reescreve um caminho de asset legado (relativo à raiz) para project-relative.
+function rewriteAssetPath(p, slug) {
+  if (typeof p !== 'string' || !p) return p;
+  const rules = [
+    [new RegExp('^gravacoes/' + slug + '/'), 'assets/gravacoes/'],
+    [new RegExp('^prints/' + slug + '/'), 'assets/prints/'],
+    [new RegExp('^narracao/cenas/' + slug + '/'), 'assets/narracao/cenas/'],
+    [/^narracao\/raw\//, 'assets/narracao/raw/'],
+    [/^narracao\/limpo\//, 'assets/narracao/limpo/'],
+  ];
+  for (const [re, to] of rules) if (re.test(p)) return p.replace(re, to);
+  return p;
+}
+function rewriteCfgPaths(cfg, slug) {
+  const r = (p) => rewriteAssetPath(p, slug);
+  if (cfg.narracao) { if (cfg.narracao.raw) cfg.narracao.raw = r(cfg.narracao.raw); if (cfg.narracao.limpo) cfg.narracao.limpo = r(cfg.narracao.limpo); }
+  if (cfg.camera?.src) cfg.camera.src = r(cfg.camera.src);
+  if (cfg.thumbnail?.src) cfg.thumbnail.src = r(cfg.thumbnail.src);
+  if (cfg.outro?.media) { const m = cfg.outro.media; if (m.srcCelular) m.srcCelular = r(m.srcCelular); if (m.srcDesktop) m.srcDesktop = r(m.srcDesktop); }
+  for (const s of (cfg.scenes || [])) { if (s.src) s.src = r(s.src); if (s.camera?.src) s.camera.src = r(s.camera.src); if (s.audio?.src) s.audio.src = r(s.audio.src); }
+  return cfg;
+}
+
+// Importa a planilha de quizzes (aba "quizzes"): cada linha vira um projeto quiz.
+// Aceita um Buffer (rota /api/import-planilha) ou um caminho de arquivo (CLI).
+// Colunas: slug, tag, hook1, hookSub, question (linhas separadas por "|"),
+// optionA..C, correta (A/B/C), reveal, fonte, dificuldade, dia, hora,
+// yt_titulo, yt_descricao, yt_tags.
+async function importPlanilha(bufOrPath) {
+  const XLSX = (await import('xlsx')).default;
+  const wb = Buffer.isBuffer(bufOrPath) ? XLSX.read(bufOrPath, { type: 'buffer' }) : XLSX.readFile(bufOrPath);
+  const sheet = wb.Sheets['quizzes'] || wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+  const result = { total: 0, ok: 0, bad: 0, slugs: [], warnsBySlug: {} };
+  for (const r of rows) {
+    const slug = String(r.slug || '').trim();
+    if (!slug || !SLUG_RE.test(slug)) continue;
+    const options = ['A', 'B', 'C']
+      .filter(L => String(r['option' + L]).trim())
+      .map(L => ({ text: String(r['option' + L]).trim(), correct: String(r.correta).trim().toUpperCase() === L }));
+    const cfg = {
+      formato: 'quiz',
+      tag: String(r.tag || 'Quiz').trim(),
+      hook1: String(r.hook1 || 'VOCÊ SABIA?').trim(),
+      hookSub: String(r.hookSub || '').trim(),
+      question: String(r.question).split('|').map(s => s.trim()).join('\n'),
+      options,
+      reveal: String(r.reveal || '').trim(),
+      ctaTitle: 'Acertou? Comenta aí.',
+      handleSub: 'tech · produtividade · IA',
+      fonte: String(r.fonte || '').trim(),
+      dificuldade: String(r.dificuldade || '').trim(),
+      agenda: { dia: +r.dia || null, hora: r.hora === '' ? null : +r.hora },
+      yt: { titulo: String(r.yt_titulo || '').trim(), descricao: String(r.yt_descricao || '').trim(), tags: String(r.yt_tags || '').trim() },
+    };
+    const warns = validate(slug, cfg);
+    result.total++;
+    if (warns.length) { result.bad++; result.warnsBySlug[slug] = warns; } else result.ok++;
+    fs.mkdirSync(projectDir(slug), { recursive: true });
+    fs.writeFileSync(projectJson(slug), JSON.stringify(cfg, null, 2) + '\n');
+    result.slugs.push(slug);
+  }
+  return result;
 }
 
 // ── comandos ─────────────────────────────────────────────────────────────────
@@ -272,13 +907,27 @@ const SKELETONS = {
     cta: { top: 'linha mono em cima', title: 'fechamento forte\nem duas linhas.' },
     handleSub: 'tech · produtividade · IA',
   },
+  tutorial: {
+    formato: 'tutorial', tag: 'Tutorial', titulo: 'Título do tutorial',
+    intro: { titulo: 'Lucas Santos', subtitulo: 'tutoriais de tech, direto ao ponto', duracao: 2.4 },
+    outro: { cta: 'INSCREVA-SE', sub: 'toda semana, um tutorial novo', duracao: 3.2 },
+    narracao: { raw: '', limpo: '', duracaoSegundos: 10 },
+    scenes: [
+      // layout "desktop" (padrão p/ video/image): janela de navegador — gravação de tela do PC.
+      // roteiro é opcional: texto de apoio mostrado na tela ao gravar pelo app móvel (teleprompter).
+      // id: gerado pelo Studio (nomeia o áudio da cena); duration: fonte de verdade — start/end são derivados em sequência.
+      { id: 's-passo1', type: 'video', layout: 'desktop', src: 'assets/gravacoes/passo1.mp4', duration: 5, start: 0, end: 5, trimStart: 0, numero: 1, caption: 'Passo 1', roteiro: 'Aqui eu explico o passo 1...' },
+      // layout "celular": mockup de telefone — gravação/print de tela do celular.
+      { id: 's-tela2', type: 'image', layout: 'celular', src: 'assets/prints/tela2.png', duration: 3, start: 5, end: 8, badge: 'RESPONSIVO', titulo: 'No celular', texto: 'Também funciona em mobile.', roteiro: 'Aqui eu explico o passo 2...' },
+    ],
+  },
 };
 
 async function main() {
   if (cmd === 'list') {
     for (const slug of listSlugs()) {
-      const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'content', slug + '.json'), 'utf8'));
-      const rendered = fs.existsSync(path.join(ROOT, 'out', slug + '.mp4')) ? '✓ mp4' : '—';
+      const cfg = JSON.parse(fs.readFileSync(projectJson(slug), 'utf8'));
+      const rendered = fs.existsSync(path.join(renderDir(slug), 'video.mp4')) ? '✓ mp4' : '—';
       const warns = validate(slug, cfg).length;
       console.log(`  ${slug.padEnd(24)} ${String(cfg.formato).padEnd(9)} ${rendered}${warns ? `  ⚠ ${warns} aviso(s)` : ''}`);
     }
@@ -289,74 +938,112 @@ async function main() {
       console.error('uso: node cli.mjs new <slug> --formato lista|quiz|historia');
       process.exit(1);
     }
-    const file = path.join(ROOT, 'content', slug + '.json');
+    const file = projectJson(slug);
     if (fs.existsSync(file)) { console.error(`✗ ${file} já existe`); process.exit(1); }
+    fs.mkdirSync(projectDir(slug), { recursive: true });
     fs.writeFileSync(file, JSON.stringify(SKELETONS[formato], null, 2) + '\n');
-    console.log(`✓ content/${slug}.json criado (formato ${formato}). Edite e rode:\n  node cli.mjs render ${slug}`);
+    console.log(`✓ projects/${slug}/project.json criado (formato ${formato}). Edite e rode:\n  node cli.mjs render ${slug}`);
   } else if (cmd === 'validate') {
     const slug = args[1];
     const warns = validate(slug, loadCfg(slug));
     if (!warns.length) console.log(`✓ ${slug}: dentro dos limites`);
     else { for (const w of warns) console.warn('  ⚠ ' + w); process.exitCode = 1; }
-  } else if (cmd === 'import') {
-    // Planilha (aba "quizzes") -> content/*.json. Colunas: slug, tag, hook1, hookSub,
-    // question (linhas separadas por " | "), optionA..C, correta, reveal, fonte,
-    // dificuldade, dia, hora, yt_titulo, yt_descricao, yt_tags.
-    const file = args[1];
-    if (!file || !fs.existsSync(file)) { console.error('uso: node cli.mjs import <planilha.xlsx|csv>'); process.exit(1); }
-    const XLSX = (await import('xlsx')).default;
-    const wb = XLSX.readFile(file);
-    const sheet = wb.Sheets['quizzes'] || wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-    let ok = 0, bad = 0;
-    for (const r of rows) {
-      const slug = String(r.slug || '').trim();
-      if (!slug) continue;
-      const options = ['A', 'B', 'C']
-        .filter(L => String(r['option' + L]).trim())
-        .map(L => ({ text: String(r['option' + L]).trim(), correct: String(r.correta).trim().toUpperCase() === L }));
-      const cfg = {
-        formato: 'quiz',
-        tag: String(r.tag || 'Quiz').trim(),
-        hook1: String(r.hook1 || 'VOCÊ SABIA?').trim(),
-        hookSub: String(r.hookSub || '').trim(),
-        question: String(r.question).split('|').map(s => s.trim()).join('\n'),
-        options,
-        reveal: String(r.reveal || '').trim(),
-        ctaTitle: 'Acertou? Comenta aí.',
-        handleSub: 'tech · produtividade · IA',
-        fonte: String(r.fonte || '').trim(),
-        dificuldade: String(r.dificuldade || '').trim(),
-        agenda: { dia: +r.dia || null, hora: r.hora === '' ? null : +r.hora },
-        yt: { titulo: String(r.yt_titulo || '').trim(), descricao: String(r.yt_descricao || '').trim(), tags: String(r.yt_tags || '').trim() },
-      };
-      const warns = validate(slug, cfg);
-      if (warns.length) { bad++; console.warn(`⚠ ${slug}:`); for (const w of warns) console.warn('    ' + w); }
-      else ok++;
-      fs.writeFileSync(path.join(ROOT, 'content', slug + '.json'), JSON.stringify(cfg, null, 2) + '\n');
+  } else if (cmd === 'export') {
+    // Empacota projects/<slug>/ num <slug>.rvs (projeto na raiz do zip).
+    const slug = args[1];
+    if (!slug || !fs.existsSync(projectJson(slug))) { console.error('uso: node cli.mjs export <slug>'); process.exit(1); }
+    const dir = projectDir(slug), entries = [];
+    const walk = (d, base) => {
+      for (const f of fs.readdirSync(d, { withFileTypes: true })) {
+        const abs = path.join(d, f.name), rel = (base ? base + '/' : '') + f.name;
+        if (f.isDirectory()) walk(abs, rel); else entries.push({ name: rel, data: fs.readFileSync(abs) });
+      }
+    };
+    walk(dir, '');
+    const out = path.join(ROOT, slug + '.rvs');
+    fs.writeFileSync(out, zipWrite(entries));
+    console.log(`✓ ${slug}.rvs — ${entries.length} arquivos, ${(fs.statSync(out).size / 1048576).toFixed(1)} MB`);
+  } else if (cmd === 'migrate') {
+    // Move content/<slug>.json + pastas por-tipo para projects/<slug>/ (uma vez).
+    const dry = hasFlag('dry-run');
+    const contentDir = path.join(ROOT, 'content');
+    if (!fs.existsSync(contentDir)) { console.log('nada em content/ — já migrado?'); return; }
+    const slugs = fs.readdirSync(contentDir).filter(f => f.endsWith('.json')).map(f => f.replace(/\.json$/, ''));
+    const mv = (from, to) => {
+      if (!fs.existsSync(from)) return;
+      if (dry) { console.log('  mv', path.relative(ROOT, from), '→', path.relative(ROOT, to)); return; }
+      fs.mkdirSync(path.dirname(to), { recursive: true }); fs.renameSync(from, to);
+    };
+    const mvDir = (from, toDir) => { if (fs.existsSync(from)) for (const f of fs.readdirSync(from)) mv(path.join(from, f), path.join(toDir, f)); };
+    let done = 0;
+    for (const slug of slugs) {
+      if (slug.includes('/') || slug.includes('\\') || slug.includes('..')) { console.warn(`  ⚠ nome inseguro, pulando: ${slug}`); continue; }
+      const cfg = rewriteCfgPaths(JSON.parse(fs.readFileSync(path.join(contentDir, slug + '.json'), 'utf8')), slug);
+      if (dry) console.log('projeto', slug);
+      else { fs.mkdirSync(projectDir(slug), { recursive: true }); fs.writeFileSync(projectJson(slug), JSON.stringify(cfg, null, 2) + '\n'); }
+      mvDir(path.join(ROOT, 'gravacoes', slug), assetDir(slug, 'gravacao'));
+      mvDir(path.join(ROOT, 'prints', slug), assetDir(slug, 'print'));
+      mvDir(path.join(ROOT, 'narracao', 'cenas', slug), assetDir(slug, 'audioCena'));
+      const rawDir = path.join(ROOT, 'narracao', 'raw');
+      if (fs.existsSync(rawDir)) for (const f of fs.readdirSync(rawDir)) if (f.replace(/\.[^.]+$/, '') === slug) mv(path.join(rawDir, f), path.join(assetDir(slug, 'narracao'), f));
+      mv(path.join(ROOT, 'narracao', 'limpo', slug + '.m4a'), path.join(assetDir(slug, 'limpo'), slug + '.m4a'));
+      mv(path.join(ROOT, 'out', slug + '.mp4'), path.join(renderDir(slug), 'video.mp4'));
+      mv(path.join(ROOT, 'out', slug + '.jpg'), path.join(renderDir(slug), 'thumb.jpg'));
+      if (!dry) fs.unlinkSync(path.join(contentDir, slug + '.json'));
+      done++;
     }
-    console.log(`✓ importados ${ok + bad} quizzes (${ok} ok, ${bad} com avisos — revise antes de renderizar)`);
+    console.log(dry ? `(dry-run) ${done} projetos migrariam para projects/` : `✓ ${done} projetos migrados para projects/`);
+  } else if (cmd === 'import') {
+    // .rvs -> projects/<slug>/  |  planilha .xlsx/.csv (aba "quizzes") -> vários projetos.
+    const file = args[1];
+    if (!file || !fs.existsSync(file)) { console.error('uso: node cli.mjs import <arquivo.rvs | planilha.xlsx|csv>'); process.exit(1); }
+    if (/\.rvs$/i.test(file)) {
+      const slug = flag('slug', path.basename(file).replace(/\.rvs$/i, ''));
+      if (!SLUG_RE.test(slug)) { console.error('✗ slug inválido'); process.exit(1); }
+      if (fs.existsSync(projectDir(slug))) { console.error(`✗ projects/${slug}/ já existe`); process.exit(1); }
+      for (const e of zipRead(fs.readFileSync(file))) {
+        const to = path.join(projectDir(slug), e.name);
+        if (!to.startsWith(projectDir(slug))) continue; // anti-traversal
+        fs.mkdirSync(path.dirname(to), { recursive: true }); fs.writeFileSync(to, e.data);
+      }
+      console.log(`✓ importado para projects/${slug}/`);
+      return;
+    }
+    if (/\.json$/i.test(file)) {
+      // só a definição (sem assets) -> projects/<slug>/project.json
+      const slug = flag('slug', path.basename(file).replace(/\.json$/i, ''));
+      if (!SLUG_RE.test(slug)) { console.error('✗ slug inválido (use --slug)'); process.exit(1); }
+      const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
+      fs.mkdirSync(projectDir(slug), { recursive: true });
+      fs.writeFileSync(projectJson(slug), JSON.stringify(cfg, null, 2) + '\n');
+      const warns = validate(slug, cfg);
+      console.log(`✓ importado projects/${slug}/project.json${warns.length ? ` (${warns.length} aviso(s))` : ''}`);
+      return;
+    }
+    const { total, ok, bad, warnsBySlug } = await importPlanilha(file);
+    for (const [slug, warns] of Object.entries(warnsBySlug)) { console.warn(`⚠ ${slug}:`); for (const w of warns) console.warn('    ' + w); }
+    console.log(`✓ importados ${total} quizzes (${ok} ok, ${bad} com avisos — revise antes de renderizar)`);
+  } else if (cmd === 'audio') {
+    // Limpa a narração crua (narracao/raw/<slug>.*) e atualiza content/<slug>.json.
+    // Uso: node cli.mjs audio <slug>
+    const slug = args[1];
+    if (!slug) { console.error('uso: node cli.mjs audio <slug>'); process.exit(1); }
+    loadCfg(slug); // valida que o projeto existe
+    const { limpo, duracaoSegundos } = await cleanNarration(slug);
+    console.log(`✓ ${limpo} — ${duracaoSegundos}s (projects/${slug}/project.json atualizado)`);
   } else if (cmd === 'musica') {
     // Embute trilha nos MP4s já renderizados (sem re-renderizar): out/ -> out-com-musica/.
     // Faixas em musica/ (rotaciona). Uso: node cli.mjs musica <slug> | --all
     const ffmpegPath = path.join(ROOT, 'tools', 'ffmpeg.exe');
     const tracks = listTracks();
     if (!tracks.length) { console.error('✗ pasta musica/ vazia — baixe faixas da YouTube Audio Library e coloque lá'); process.exit(1); }
-    const slugs = (hasFlag('all') ? listSlugs() : [args[1]]).filter(s => s && fs.existsSync(path.join(ROOT, 'out', s + '.mp4')));
+    const slugs = (hasFlag('all') ? listSlugs() : [args[1]]).filter(s => s && fs.existsSync(path.join(renderDir(s), 'video.mp4')));
     if (!slugs.length) { console.error('uso: node cli.mjs musica <slug> | --all (renderize antes)'); process.exit(1); }
-    fs.mkdirSync(path.join(ROOT, 'out-com-musica'), { recursive: true });
     for (const [i, slug] of slugs.entries()) {
-      const src = path.join(ROOT, 'out', slug + '.mp4');
-      const dst = path.join(ROOT, 'out-com-musica', slug + '.mp4');
+      const src = path.join(renderDir(slug), 'video.mp4');
+      const dst = path.join(renderDir(slug), 'video-com-musica.mp4');
       const track = tracks[i % tracks.length];
-      const dur = await new Promise((res) => {
-        const p = spawn(ffmpegPath, ['-i', src]);
-        let e = ''; p.stderr.on('data', d => e += d);
-        p.on('close', () => {
-          const m = /Duration: (\d+):(\d+):([\d.]+)/.exec(e);
-          res(m ? (+m[1] * 3600 + +m[2] * 60 + +m[3]) : 15);
-        });
-      });
+      const dur = await probeDuration(ffmpegPath, src);
       await run(ffmpegPath, [
         '-y', '-i', src, '-stream_loop', '-1', '-i', track,
         '-map', '0:v', '-map', '1:a', '-c:v', 'copy',
@@ -364,19 +1051,19 @@ async function main() {
         '-af', `volume=0.9,afade=t=out:st=${Math.max(0, dur - 1.2)}:d=1.2`,
         '-t', String(dur), '-movflags', '+faststart', dst,
       ]);
-      console.log(`  ✓ out-com-musica/${slug}.mp4 ← ${path.basename(track)}`);
+      console.log(`  ✓ projects/${slug}/render/video-com-musica.mp4 ← ${path.basename(track)}`);
     }
   } else if (cmd === 'planilha') {
     // Gera out/publicacao.xlsx com os metadados de upload manual, ordenado por dia/hora.
     const XLSX = (await import('xlsx')).default;
     const rows = [];
     for (const slug of listSlugs()) {
-      const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'content', slug + '.json'), 'utf8'));
+      const cfg = JSON.parse(fs.readFileSync(projectJson(slug), 'utf8'));
       if (cfg.formato !== 'quiz' || !cfg.yt) continue;
       rows.push({
         dia: cfg.agenda?.dia ?? '', hora: cfg.agenda?.hora ?? '',
-        arquivo: 'out\\' + slug + '.mp4',
-        mp4_pronto: fs.existsSync(path.join(ROOT, 'out', slug + '.mp4')) ? 'sim' : 'NÃO',
+        arquivo: `projects\\${slug}\\render\\video.mp4`,
+        mp4_pronto: fs.existsSync(path.join(renderDir(slug), 'video.mp4')) ? 'sim' : 'NÃO',
         titulo: cfg.yt.titulo, descricao: cfg.yt.descricao, tags: cfg.yt.tags,
         pergunta: cfg.question.replace(/\n/g, ' '),
         resposta: (cfg.options.find(o => o.correct) || {}).text || '',
@@ -394,8 +1081,15 @@ async function main() {
     console.log(`✓ out/publicacao.xlsx — ${rows.length} vídeos, ordenado por dia/hora`);
   } else if (cmd === 'serve') {
     const port = +flag('port', 5173);
-    await serve(port);
-    console.log(`reels-studio no ar: http://127.0.0.1:${port}/  (player: /player/player.html?reel=<slug>)`);
+    const tls = httpsOptions();
+    await serve(port, { network: true });
+    console.log(`reels-studio no ar: http${tls ? 's' : ''}://127.0.0.1:${port}/  (player: /player/player.html?reel=<slug>)`);
+    if (tls) {
+      const ip = lanIp();
+      console.log(`  Studio na rede local (celular): https://${ip || '<IP-da-LAN>'}:${port}/studio/`);
+    } else {
+      console.log('  (sem certs/cert.pem + certs/key.pem — HTTP local apenas; gere certs com mkcert para acessar do celular)');
+    }
   } else if (cmd === 'render') {
     const fps = +flag('fps', 30);
     const slugs = hasFlag('all') ? listSlugs() : [args[1]];
