@@ -1,0 +1,27 @@
+id: citacao
+name: "Citação"
+desc: "Frase em destaque + autor — cartão 100% declarativo (só YAML)"
+formato: tutorial
+order: 15
+scene: { type: citacao, duration: 5 }
+fields:
+  - { name: frase, label: "frase", type: textarea, rows: 3, default: "Sua frase aqui." }
+  - { name: autor, label: "autor", type: text }
+# layout declarativo: interpretado por engine/layout-renderer.jsx. Sem JS.
+layout:
+  - type: text
+    x: 200
+    y: 380
+    w: 1520
+    anim: pop
+    text: "“{frase}”"
+    style: { size: 84, weight: 700, color: $fg, lineHeight: 1.15 }
+  - type: text
+    if: autor
+    x: 200
+    y: 760
+    w: 1520
+    anim: fade
+    text: "— {autor}"
+    style: { size: 36, color: $red, font: mono }
+thumb: thumb.svg
