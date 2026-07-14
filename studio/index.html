@@ -246,7 +246,10 @@
   .fs-head { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line);
     font-family: var(--mono); font-size: 12px; color: var(--mute); }
   .fs-overlay .panel-preview, .fs-overlay .gravar { flex: 1; min-height: 0; }
-  .tl-track.vertical { flex-direction: column; overflow-x: visible; overflow-y: auto; }
+  /* no estreito, a lista flui na rolagem da página (.narrow-body) — NÃO cria um
+     scroller aninhado de altura indefinida (flex:1 + overflow:auto), que no Chrome
+     do Android vira uma camada de composição gigante e renderiza lixo de GPU. */
+  .tl-track.vertical { flex-direction: column; flex: none; overflow: visible; }
   .tl-track.vertical .tl-block { width: 100% !important; min-height: 58px; }
   .panel-timeline.vertical { border-top: none; flex: none; }
   .panel-timeline.vertical .tl-head { flex-wrap: wrap; row-gap: 8px; padding: 12px 14px 6px; }
