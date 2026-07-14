@@ -1,0 +1,14 @@
+{
+  "id": "/studio/",
+  "name": "Reels Studio — Editor",
+  "short_name": "Studio",
+  "description": "Editor de tutoriais do reels-studio (timeline, cenas, narração por take e render local)",
+  "start_url": "/studio/",
+  "scope": "/studio/",
+  "display": "standalone",
+  "background_color": "#0C0C0F",
+  "theme_color": "#0C0C0F",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
