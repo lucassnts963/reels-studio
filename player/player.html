@@ -28,10 +28,12 @@
       list.map(s => '  · <a style="color:#E5484D" href="/player/player.html?reel=' + s + '">' + s + '</a>').join('\n') + '</div>';
     return;
   }
-  const res = await fetch('/content/' + slug + '.json');
-  if (!res.ok) throw new Error('content/' + slug + '.json não encontrado (' + res.status + ')');
+  const res = await fetch('/projects/' + slug + '/project.json');
+  if (!res.ok) throw new Error('projects/' + slug + '/project.json não encontrado (' + res.status + ')');
   const cfg = await res.json();
   window.REEL_CONFIG = cfg;
+  // base para resolver caminhos de asset relativos ao projeto (ex.: "assets/gravacoes/foo.mp4").
+  window.__ASSET_BASE = '/projects/' + slug + '/';
 
   const files = [
     '/engine/animations.jsx',
@@ -61,7 +63,26 @@
     document.fonts.load("500 20px 'IBM Plex Mono'"),
   ]);
   await document.fonts.ready;
-  requestAnimationFrame(() => requestAnimationFrame(() => { window.__REEL_READY = true; }));
+
+  // Controle externo (Studio): congelar num frame e comandar seek/play via
+  // postMessage. O Stage já escuta 'data-om-seek-to-time-frame' no <svg>
+  // exportável (pausa + posiciona o playhead); só repassamos o evento.
+  const seekTo = (t) => {
+    const svg = document.querySelector('svg[data-om-exportable-video-with-duration-secs]');
+    if (svg && isFinite(+t)) svg.dispatchEvent(new CustomEvent('data-om-seek-to-time-frame', { detail: { time: +t } }));
+  };
+  window.addEventListener('message', (e) => {
+    const m = e.data || {};
+    if (m.type === 'reel-seek') seekTo(m.time);
+    // Space é o toggle nativo do Stage (keydown global) — simulamos a tecla.
+    if (m.type === 'reel-toggle-play') window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', bubbles: true }));
+  });
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const freeze = q.get('freeze');
+    if (freeze !== null) seekTo(freeze);
+    window.__REEL_READY = true;
+  }));
 })().catch(e => {
   window.__REEL_ERROR = String(e && e.stack || e);
   document.body.innerHTML = '<div id="err"></div>';

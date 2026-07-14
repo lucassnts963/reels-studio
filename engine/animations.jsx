@@ -843,25 +843,32 @@ function IconButton({ children, onClick, title }) {
 
 
 // ── VideoSprite ─────────────────────────────────────────────────────────────
-// Renders a <video> that loops within [start,end] of its source at `speed`,
-// kept in sync with the Stage's playhead. Carries the
-// data-om-exportable-video-play-* attrs so video export can mix its audio.
+// Renders a <video> synced to the Stage's playhead while mounted within
+// [start,end] (absolute stage seconds). `trimStart` offsets into the source
+// file so raw recordings don't need pre-cutting. `loop=true` (default) wraps
+// playback every `span` seconds; `loop=false` plays through once and holds
+// on the last frame. Carries the data-om-exportable-video-play-* attrs so
+// video export can mix its audio.
 //
-//   <VideoSprite src="clip.mp4" start={2} end={5} speed={1}
+//   <VideoSprite src="clip.mp4" start={2} end={5} trimStart={1.2} loop={false}
 //     style={{ width: 640, height: 360 }} />
 
-function VideoSprite({ src, start = 0, end, speed = 1, style, ...rest }) {
-  start = +start || 0; speed = +speed || 1;
+function VideoSprite({ src, start = 0, end, trimStart = 0, speed = 1, loop = true, style, ...rest }) {
+  start = +start || 0; speed = +speed || 1; trimStart = +trimStart || 0;
   if (end != null) end = +end || undefined;
   const t = useTime();
   const ref = React.useRef(null);
   const span = Math.max(0.001, ((end ?? start + 1) - start));
-  React.useEffect(() => {
+  // useLayoutEffect (não useEffect): precisa rodar de forma síncrona dentro do
+  // flushSync do seek de exportação — cli.mjs tira o screenshot logo depois
+  // do dispatchEvent retornar, sem esperar o próximo paint/microtask.
+  React.useLayoutEffect(() => {
     const v = ref.current;
     if (!v || v.readyState < 1) return;
-    const target = start + ((t * speed) % span);
+    const elapsed = (t - start) * speed;
+    const target = trimStart + (loop ? (((elapsed % span) + span) % span) : clamp(elapsed, 0, span));
     if (Math.abs(v.currentTime - target) > 0.05) v.currentTime = target;
-  }, [t, start, span, speed]);
+  }, [t, start, span, speed, trimStart, loop]);
   return (
     <video
       ref={ref}
