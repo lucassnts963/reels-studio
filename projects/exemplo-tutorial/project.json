@@ -1,0 +1,48 @@
+{
+  "formato": "tutorial",
+  "tag": "Tutorial",
+  "titulo": "Título do tutorial",
+  "intro": {
+    "titulo": "Lucas Santos",
+    "subtitulo": "tutoriais de tech, direto ao ponto",
+    "duracao": 2.4
+  },
+  "outro": {
+    "cta": "INSCREVA-SE",
+    "sub": "toda semana, um tutorial novo",
+    "duracao": 3.2
+  },
+  "narracao": {
+    "raw": "",
+    "limpo": "",
+    "duracaoSegundos": 10
+  },
+  "scenes": [
+    {
+      "id": "s-passo1",
+      "type": "video",
+      "layout": "desktop",
+      "src": "gravacoes/<slug>/passo1.mp4",
+      "duration": 5,
+      "start": 0,
+      "end": 5,
+      "trimStart": 0,
+      "numero": 1,
+      "caption": "Passo 1",
+      "roteiro": "Aqui eu explico o passo 1..."
+    },
+    {
+      "id": "s-tela2",
+      "type": "image",
+      "layout": "celular",
+      "src": "prints/<slug>/tela2.png",
+      "duration": 3,
+      "start": 5,
+      "end": 8,
+      "badge": "RESPONSIVO",
+      "titulo": "No celular",
+      "texto": "Também funciona em mobile.",
+      "roteiro": "Aqui eu explico o passo 2..."
+    }
+  ]
+}

@@ -1,13 +1,26 @@
 node_modules/
-out/
-out-com-musica/
 .env
 tools/*
 !tools/.gitkeep
+*.rvs
 
-# Conteudo de producao: mantem apenas exemplos de cada formato como modelo.
-content/*
-!content/exemplo-lista.json
-!content/exemplo-quiz.json
-!content/exemplo-historia.json
-!content/exemplo-custom.json
+# Projetos de produção (cada um em projects/<slug>/ com project.json + assets/ +
+# render/). Mantém só os exemplos de cada formato como modelo, sem os renders.
+projects/*
+!projects/exemplo-lista/
+!projects/exemplo-quiz/
+!projects/exemplo-historia/
+!projects/exemplo-custom/
+!projects/exemplo-tutorial/
+projects/exemplo-*/render/
+
+# Certificado HTTPS local (mkcert) para acessar o Studio via LAN.
+certs/
+
+# Legado pré-migração (pastas por-tipo) — ignoradas se ainda existirem.
+content/
+gravacoes/
+prints/
+narracao/
+out/
+out-com-musica/
