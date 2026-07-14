@@ -186,6 +186,29 @@ function DesktopFrame({ children, url = 'localhost:3000' }) {
   );
 }
 
+// Variante paramétrica/posicionável do DesktopFrame — usada pelo interpretador
+// de layout (nó `frame` kind: browser). DesktopFrame continua com coordenadas
+// fixas (caminho JSX); esta aceita x/y/w/h e cai nos mesmos padrões quando omitidos.
+function BrowserFrame({ children, url = 'localhost:3000', x = 200, y = 96, w = 1520, h = 790 }) {
+  return (
+    <div style={{
+      position: 'absolute', top: y, left: x, width: w, height: h,
+      background: BRAND.card, border: '1px solid rgba(255,255,255,.10)', borderRadius: 14,
+      overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,.55)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,.08)', background: '#111114' }}>
+        <span style={{ width: 15, height: 15, borderRadius: 9999, background: BRAND.red, display: 'inline-block' }} />
+        <span style={{ width: 15, height: 15, borderRadius: 9999, background: '#3a3a40', display: 'inline-block' }} />
+        <span style={{ width: 15, height: 15, borderRadius: 9999, background: '#3a3a40', display: 'inline-block' }} />
+        <div style={{ marginLeft: 22, flex: 1, display: 'flex', alignItems: 'center', gap: 12, background: BRAND.ink, border: '1px solid rgba(255,255,255,.08)', borderRadius: 9999, padding: '10px 22px', fontFamily: BRAND.mono, fontSize: 22, color: BRAND.mute }}>
+          <span style={{ color: BRAND.red }}>▸</span> {url}
+        </div>
+      </div>
+      <div style={{ position: 'absolute', top: 73, left: 0, right: 0, bottom: 0 }}>{children}</div>
+    </div>
+  );
+}
+
 // Badge "PASSO NN" + legenda, ancorados no rodapé — combina com DesktopFrame.
 function SceneCaption({ n, text }) {
   if (!text) return null;
@@ -411,5 +434,5 @@ function Outro({ cta = 'INSCREVA-SE', sub = '', media = null, start, end }) {
 
 Object.assign(window, {
   BRAND, absAsset, Backdrop, TopBar, Handle, Keycap, Pop, Eyebrow, Intro, Outro, CameraBubble,
-  DesktopFrame, SceneCaption, PhoneFrame, CelularScene, CameraIntroScene, StepCard, TerminalCard, Callout,
+  DesktopFrame, BrowserFrame, SceneCaption, PhoneFrame, CelularScene, CameraIntroScene, StepCard, TerminalCard, Callout,
 });

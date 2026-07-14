@@ -487,13 +487,16 @@ function validate(slug, cfg) {
     const n = cfg.scenes?.length ?? 0;
     if (n < 1) warns.push('scenes: 0 cenas (use pelo menos 1)');
     const bodyDur = cfg.narracao?.duracaoSegundos || 0;
-    const SCENE_TYPES = ['video', 'image', 'passo', 'codigo', 'camera-intro'];
-    const SCENE_LAYOUTS = ['desktop', 'celular', 'callout', 'raw'];
+    // Tipos/layouts embutidos (molduras JSX) + os file-driven (templates/scenes/
+    // */manifest.yaml). Um template declarativo novo passa a valer sem tocar aqui.
+    const catalog = listSceneTemplates();
+    const SCENE_TYPES = [...new Set(['video', 'image', 'passo', 'codigo', 'camera-intro', ...catalog.map(c => c.scene?.type).filter(Boolean)])];
+    const SCENE_LAYOUTS = [...new Set(['desktop', 'celular', 'callout', 'raw', ...catalog.map(c => c.scene?.layout).filter(Boolean)])];
     const hasSceneAudio = (cfg.scenes || []).some(s => s.audio?.src);
     for (const [i, s] of (cfg.scenes || []).entries()) {
-      if (!s.type || !SCENE_TYPES.includes(s.type)) warns.push(`scenes[${i}].type: "${s.type}" inválido (use video, image, passo, codigo ou camera-intro)`);
+      if (!s.type || !SCENE_TYPES.includes(s.type)) warns.push(`scenes[${i}].type: "${s.type}" inválido (tipos: ${SCENE_TYPES.join(', ')})`);
       if (['video', 'image'].includes(s.type) && !s.src) warns.push(`scenes[${i}].src: obrigatório para type=${s.type}`);
-      if (s.layout && !SCENE_LAYOUTS.includes(s.layout)) warns.push(`scenes[${i}].layout: "${s.layout}" inválido (use desktop, celular, callout ou raw)`);
+      if (s.layout && !SCENE_LAYOUTS.includes(s.layout)) warns.push(`scenes[${i}].layout: "${s.layout}" inválido (layouts: ${SCENE_LAYOUTS.join(', ')})`);
       if (s.audio && !s.audio.src) warns.push(`scenes[${i}].audio.src: obrigatório quando "audio" está presente`);
       if (s.camera && !s.camera.src) warns.push(`scenes[${i}].camera.src: obrigatório quando "camera" está presente`);
       const start = +s.start || 0, end = +s.end || 0;

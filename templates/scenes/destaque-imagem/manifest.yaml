@@ -1,0 +1,42 @@
+id: destaque-imagem
+name: "Destaque · Imagem"
+desc: "Imagem full-bleed + vinheta + título — composição declarativa (só YAML)"
+formato: tutorial
+order: 16
+scene: { type: destaque, layout: imagem, duration: 4 }
+fields:
+  - { name: src, label: "imagem", type: asset, kind: prints }
+  - { name: titulo, label: "título", type: text, default: "Título em destaque" }
+  - { name: legenda, label: "legenda", type: text }
+# layout declarativo: imagem cobrindo o canvas, vinheta escura e título embaixo.
+layout:
+  - type: image
+    x: 0
+    y: 0
+    w: 1920
+    h: 1080
+    src: "{src}"
+    fit: cover
+    kenBurns: true
+  - type: rect
+    x: 0
+    y: 0
+    w: 1920
+    h: 1080
+    style: { bg: "linear-gradient(180deg, rgba(8,8,10,.15) 0%, transparent 40%, rgba(8,8,10,.88) 100%)" }
+  - type: text
+    x: 120
+    y: 820
+    w: 1680
+    anim: pop
+    text: "{titulo}"
+    style: { size: 76, weight: 700, color: $fg, lineHeight: 1.05 }
+  - type: text
+    if: legenda
+    x: 120
+    y: 940
+    w: 1680
+    anim: fade
+    text: "{legenda}"
+    style: { size: 34, color: $body, font: mono }
+thumb: thumb.svg

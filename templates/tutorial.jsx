@@ -40,8 +40,26 @@ const DESKTOP_CONTENT = { width: 1520, height: 717 }; // 790 - 73 (barra de tít
 const PHONE_CONTENT = { width: 440, height: 900 };
 const RAW_BOX = { x: 96, y: 220, width: 1728, height: 600 };
 
+// Acha o manifesto (templates/scenes/*/manifest.yaml, via /api/scene-templates)
+// que corresponde a esta cena — mesmo casamento por type+layout do Studio.
+function manifestForScene(scene) {
+  const cat = window.__SCENE_TEMPLATES;
+  if (!Array.isArray(cat)) return null;
+  const layout = scene.layout || (scene.type === 'video' || scene.type === 'image' ? 'desktop' : undefined);
+  return cat.find(c => c.scene?.type === scene.type && (c.scene?.layout || undefined) === layout)
+    || cat.find(c => c.scene?.type === scene.type);
+}
+
 function TutorialScene({ scene, start, end }) {
   const layout = scene.layout || (scene.type === 'video' || scene.type === 'image' ? 'desktop' : null);
+
+  // Interpretador de layout declarativo (Fase 6): se o manifesto da cena traz um
+  // `layout` (árvore de nós), o SceneRenderer desenha a moldura. Senão, cai nas
+  // molduras JSX abaixo (as 9 built-in — zero regressão).
+  const manifest = manifestForScene(scene);
+  if (manifest && Array.isArray(manifest.layout) && manifest.layout.length && typeof SceneRenderer === 'function') {
+    return <SceneRenderer layout={manifest.layout} scene={scene} start={start} end={end} />;
+  }
 
   if (scene.type === 'camera-intro') {
     return (

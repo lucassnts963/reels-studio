@@ -69,12 +69,76 @@ um sub-schema — ex. as `linhas` do terminal). Cada field pode ter `default`.
 
 As molduras existentes que os templates reusam (via `scene.type`/`scene.layout`):
 `camera-intro`, `passo`, `codigo`, e `video`/`image` com layout `desktop`, `celular`,
-`callout` ou `raw`. **Uma moldura visual NOVA** (um desenho de cena inédito) ainda
-exige um componente no `engine/reel-kit.jsx` + branch no `templates/tutorial.jsx` —
-o interpretador declarativo que elimina isso é uma fase futura.
+`callout` ou `raw`. Para **uma moldura visual NOVA** (um desenho de cena inédito)
+você não precisa mais de JS: descreva o layout no próprio manifesto com a chave
+`layout` (ver abaixo).
 
 Empacotar: `node cli.mjs export-template <id>` → `<id>.rvtemplate`; importar:
 `node cli.mjs import <arquivo>.rvtemplate --id <novo-id>` ou **importar ▾ → template**.
+
+## Layout declarativo (moldura nova só com YAML)
+
+Um template de cena de **tutorial** pode trazer uma chave `layout`: uma lista de
+**nós** que descrevem a moldura visual. Quando existe, o render desenha a cena com o
+interpretador (`engine/layout-renderer.jsx`) em vez das molduras JSX embutidas.
+Acrescentar um layout inédito passa a ser **só um arquivo** — nenhum JS.
+
+Cada nó tem um `type` e, quando posicionado no canvas 1920×1080, `x`/`y`/`w`/`h` (px):
+
+- `type: text` — `text` (string). Ex.: `text: "“{frase}”"`.
+- `type: image` — `src` (binding), `fit` (`cover`/`contain`), `radius`, `kenBurns: true`.
+- `type: video` — `src`, `trimStart`, `loop`, `fit`, `radius` — **herda a janela de
+  tempo da cena** (start/end automáticos, sem repetir o vídeo à mão).
+- `type: rect` — caixa só de estilo (fundo/borda/gradiente).
+- `type: row` / `type: col` — flexbox com `gap`, `align`, `justify` e `children: []`.
+- `type: frame` — moldura reutilizável: `kind: browser` (com `url`) ou `kind: phone`,
+  e `children` no conteúdo.
+
+Extras de qualquer nó: `if: <campo>` (só renderiza se `scene[campo]` for verdadeiro),
+`anim: pop | fade | none` (entrada/saída animada) e `style: {}`.
+
+**Bindings**: em `text`/`src`/`url`, `{campo}` vira `scene[campo]`; `{campo|fallback}`
+usa o fallback quando vazio. **Tokens do tema**: em qualquer valor de `style`, `$token`
+(ex.: `$fg`, `$red`, `$card`, `$mono`) é resolvido pelo tema atual — então a moldura
+acompanha a troca de tema automaticamente.
+
+Chaves de `style` (apelidos → CSS): `size`→fontSize, `weight`, `color`, `bg`→background,
+`border`, `shadow`, `radius`, `padding`, `lineHeight`, `letterSpacing`, `maxWidth`,
+`align`→textAlign, `uppercase`, `fit`→objectFit, `font` (`sans`/`mono`/família CSS).
+Qualquer outra chave passa direto como CSS.
+
+```yaml
+id: citacao
+name: "Citação"
+formato: tutorial
+order: 15
+scene: { type: citacao, duration: 5 }
+fields:
+  - { name: frase, label: "frase", type: textarea, rows: 3, default: "Sua frase aqui." }
+  - { name: autor, label: "autor", type: text }
+layout:
+  - type: text
+    x: 200
+    y: 380
+    w: 1520
+    anim: pop
+    text: "“{frase}”"
+    style: { size: 84, weight: 700, color: $fg, lineHeight: 1.15 }
+  - type: text
+    if: autor
+    x: 200
+    y: 760
+    w: 1520
+    anim: fade
+    text: "— {autor}"
+    style: { size: 36, color: $red, font: mono }
+thumb: thumb.svg
+```
+
+Templates de exemplo já inclusos: `templates/scenes/citacao` (texto puro) e
+`templates/scenes/destaque-imagem` (imagem full-bleed + vinheta + título). As 9
+molduras built-in (sem `layout`) continuam desenhadas pelo JSX — o interpretador é
+**aditivo**, então elas não mudam.
 
 ## Como funciona por dentro
 
