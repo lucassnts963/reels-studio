@@ -1,0 +1,10 @@
+id: image-desktop
+name: "Print · PC"
+desc: "Print de tela do computador em janela de navegador"
+formato: tutorial
+order: 60
+scene: { type: image, layout: desktop, duration: 4 }
+fields:
+  - { name: url, label: "URL na barra (decorativa)", type: text, mono: true }
+  - { name: numero, label: "nº do passo (badge)", type: number, step: 1 }
+  - { name: caption, label: "legenda", type: text }

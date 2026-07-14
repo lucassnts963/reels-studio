@@ -1,0 +1,8 @@
+id: raw
+name: "Sem moldura"
+desc: "Mídia direta, sem mockup, com legenda opcional"
+formato: tutorial
+order: 90
+scene: { type: video, layout: raw, duration: 5 }
+fields:
+  - { name: caption, label: "legenda", type: text }

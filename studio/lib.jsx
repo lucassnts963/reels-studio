@@ -87,18 +87,45 @@ const DEFAULT_TUTORIAL = {
   scenes: [],
 };
 
-// Catálogo da galeria "+ nova cena": um card por combinação tipo/layout.
-const SCENE_CATALOG = [
-  { key: 'camera-intro', name: 'Abertura (câmera)', desc: 'Você grande na tela + título ao lado — abertura talking-head', make: () => ({ type: 'camera-intro', badge: '', titulo: 'Abertura', subtitulo: '', duration: 6 }) },
-  { key: 'passo', name: 'Passo', desc: 'Cartão de transição: número grande + título', make: () => ({ type: 'passo', numero: 1, total: 5, titulo: 'Título do passo', subtitulo: '', duration: 4 }) },
-  { key: 'codigo', name: 'Terminal', desc: 'Janela de terminal com comandos', make: () => ({ type: 'codigo', titulo: 'terminal', linhas: [{ prompt: '$', texto: 'comando' }], caption: '', duration: 6 }) },
-  { key: 'video-desktop', name: 'Vídeo · PC', desc: 'Gravação de tela do computador em janela de navegador', make: () => ({ type: 'video', layout: 'desktop', src: '', url: '', caption: '', duration: 5 }) },
-  { key: 'video-celular', name: 'Vídeo · Celular', desc: 'Gravação de tela do celular em mockup de telefone', make: () => ({ type: 'video', layout: 'celular', src: '', badge: '', titulo: '', texto: '', duration: 5 }) },
-  { key: 'image-desktop', name: 'Print · PC', desc: 'Print de tela do computador em janela de navegador', make: () => ({ type: 'image', layout: 'desktop', src: '', url: '', caption: '', duration: 4 }) },
-  { key: 'image-celular', name: 'Print · Celular', desc: 'Print de tela do celular em mockup de telefone', make: () => ({ type: 'image', layout: 'celular', src: '', badge: '', titulo: '', texto: '', duration: 4 }) },
-  { key: 'callout', name: 'Destaque', desc: 'Mídia em tela cheia + caixa de destaque e anotação', make: () => ({ type: 'image', layout: 'callout', src: '', highlight: { x: 200, y: 200, w: 400, h: 200 }, title: 'Destaque', body: '', duration: 4 }) },
-  { key: 'raw', name: 'Sem moldura', desc: 'Mídia direta, sem mockup, com legenda opcional', make: () => ({ type: 'video', layout: 'raw', src: '', caption: '', duration: 5 }) },
+// Catálogo da galeria "+ nova cena". Agora é FILE-DRIVEN: vem dos manifests em
+// templates/scenes/*/manifest.yaml via GET /api/scene-templates. Este array é só
+// o FALLBACK embutido (usado offline ou se a rota falhar).
+const SCENE_CATALOG_FALLBACK = [
+  { id: 'camera-intro', name: 'Abertura (câmera)', desc: 'Você grande na tela + título ao lado', scene: { type: 'camera-intro', duration: 6 }, fields: [{ name: 'badge', label: 'badge', type: 'text' }, { name: 'titulo', label: 'título', type: 'text', default: 'Abertura' }, { name: 'subtitulo', label: 'subtítulo', type: 'text' }] },
+  { id: 'passo', name: 'Passo', desc: 'Número grande + título', scene: { type: 'passo', duration: 4 }, fields: [{ name: 'numero', label: 'número', type: 'number', step: 1, default: 1 }, { name: 'total', label: 'total', type: 'number', step: 1, default: 5 }, { name: 'titulo', label: 'título', type: 'text', default: 'Título do passo' }, { name: 'subtitulo', label: 'subtítulo', type: 'text' }] },
+  { id: 'codigo', name: 'Terminal', desc: 'Janela de terminal', scene: { type: 'codigo', duration: 6 }, fields: [{ name: 'titulo', label: 'título', type: 'text', mono: true, default: 'terminal' }, { name: 'linhas', label: 'linhas', type: 'list', default: [{ prompt: '$', texto: 'comando' }], item: [{ name: 'prompt', type: 'text', mono: true, width: 52, default: '$' }, { name: 'texto', type: 'text', mono: true }] }, { name: 'caption', label: 'legenda', type: 'text' }] },
+  { id: 'video-desktop', name: 'Vídeo · PC', desc: 'Tela do computador em navegador', scene: { type: 'video', layout: 'desktop', duration: 5 }, fields: [{ name: 'url', label: 'URL na barra', type: 'text', mono: true }, { name: 'numero', label: 'nº do passo', type: 'number', step: 1 }, { name: 'caption', label: 'legenda', type: 'text' }] },
+  { id: 'video-celular', name: 'Vídeo · Celular', desc: 'Tela do celular em mockup', scene: { type: 'video', layout: 'celular', duration: 5 }, fields: [{ name: 'badge', label: 'badge', type: 'text' }, { name: 'titulo', label: 'título', type: 'text' }, { name: 'texto', label: 'texto', type: 'textarea', rows: 2 }, { name: 'comando', label: 'comando', type: 'text', mono: true }] },
+  { id: 'image-desktop', name: 'Print · PC', desc: 'Print do computador', scene: { type: 'image', layout: 'desktop', duration: 4 }, fields: [{ name: 'url', label: 'URL na barra', type: 'text', mono: true }, { name: 'numero', label: 'nº do passo', type: 'number', step: 1 }, { name: 'caption', label: 'legenda', type: 'text' }] },
+  { id: 'image-celular', name: 'Print · Celular', desc: 'Print do celular', scene: { type: 'image', layout: 'celular', duration: 4 }, fields: [{ name: 'badge', label: 'badge', type: 'text' }, { name: 'titulo', label: 'título', type: 'text' }, { name: 'texto', label: 'texto', type: 'textarea', rows: 2 }, { name: 'comando', label: 'comando', type: 'text', mono: true }] },
+  { id: 'callout', name: 'Destaque', desc: 'Mídia + caixa de destaque', scene: { type: 'image', layout: 'callout', duration: 4 }, fields: [{ name: 'highlight', label: 'destaque', type: 'group', default: { x: 200, y: 200, w: 400, h: 200 }, fields: [{ name: 'x', label: 'x', type: 'number', step: 10 }, { name: 'y', label: 'y', type: 'number', step: 10 }, { name: 'w', label: 'larg.', type: 'number', step: 10 }, { name: 'h', label: 'alt.', type: 'number', step: 10 }] }, { name: 'title', label: 'título da anotação', type: 'text', default: 'Destaque' }, { name: 'body', label: 'texto da anotação', type: 'textarea', rows: 2 }] },
+  { id: 'raw', name: 'Sem moldura', desc: 'Mídia direta, sem mockup', scene: { type: 'video', layout: 'raw', duration: 5 }, fields: [{ name: 'caption', label: 'legenda', type: 'text' }] },
 ];
+
+// make(): objeto-cena inicial = scene do manifesto + defaults dos fields.
+function sceneFromTemplate(entry) {
+  const s = { ...entry.scene };
+  for (const f of (entry.fields || [])) if (f.default !== undefined && s[f.name] === undefined) s[f.name] = f.default;
+  return s;
+}
+
+// Busca o catálogo file-driven (fallback embutido se offline/erro).
+async function loadSceneCatalog() {
+  try {
+    const res = await fetch('/api/scene-templates');
+    if (!res.ok) throw 0;
+    const list = await res.json();
+    if (Array.isArray(list) && list.length) return list.sort((a, b) => (a.order || 0) - (b.order || 0));
+  } catch {}
+  return SCENE_CATALOG_FALLBACK;
+}
+
+// Acha o template (manifesto) que corresponde a uma cena, por type+layout.
+function templateForScene(catalog, s) {
+  const layout = s.layout || (s.type === 'video' || s.type === 'image' ? 'desktop' : undefined);
+  return (catalog || []).find(c => c.scene?.type === s.type && (c.scene?.layout || undefined) === layout)
+    || (catalog || []).find(c => c.scene?.type === s.type);
+}
 
 const fmtSecs = (s) => (+s || 0).toFixed(1).replace(/\.0$/, '') + 's';
 const fmtClock = (s) => {
@@ -111,4 +138,4 @@ const SLUG_RE_UI = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 // consts de topo não atravessam evals separados (só declarações de função) —
 // exporta explicitamente, no mesmo padrão do engine/reel-kit.jsx.
-Object.assign(window, { DEFAULT_TUTORIAL, SCENE_CATALOG, fmtSecs, fmtClock, SLUG_RE_UI });
+Object.assign(window, { DEFAULT_TUTORIAL, SCENE_CATALOG_FALLBACK, sceneFromTemplate, loadSceneCatalog, templateForScene, fmtSecs, fmtClock, SLUG_RE_UI });

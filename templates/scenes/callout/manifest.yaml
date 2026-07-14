@@ -1,0 +1,18 @@
+id: callout
+name: "Destaque"
+desc: "Mídia em tela cheia + caixa de destaque e anotação"
+formato: tutorial
+order: 80
+scene: { type: image, layout: callout, duration: 4 }
+fields:
+  - name: highlight
+    label: "destaque (px do canvas 1920x1080)"
+    type: group
+    default: { x: 200, y: 200, w: 400, h: 200 }
+    fields:
+      - { name: x, label: "x", type: number, step: 10 }
+      - { name: y, label: "y", type: number, step: 10 }
+      - { name: w, label: "larg.", type: number, step: 10 }
+      - { name: h, label: "alt.", type: number, step: 10 }
+  - { name: title, label: "título da anotação", type: text, default: "Destaque" }
+  - { name: body, label: "texto da anotação", type: textarea, rows: 2 }

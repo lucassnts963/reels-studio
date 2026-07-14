@@ -1,0 +1,10 @@
+id: camera-intro
+name: "Abertura (câmera)"
+desc: "Você grande na tela + título ao lado — abertura talking-head"
+formato: tutorial
+order: 10
+scene: { type: camera-intro, duration: 6 }
+fields:
+  - { name: badge, label: "badge (pílula pequena, opcional)", type: text }
+  - { name: titulo, label: "título", type: text, default: "Abertura" }
+  - { name: subtitulo, label: "subtítulo", type: text }

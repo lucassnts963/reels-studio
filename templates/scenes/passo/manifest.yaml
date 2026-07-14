@@ -1,0 +1,11 @@
+id: passo
+name: "Passo"
+desc: "Cartão de transição: número grande + título"
+formato: tutorial
+order: 20
+scene: { type: passo, duration: 4 }
+fields:
+  - { name: numero, label: "número", type: number, step: 1, default: 1 }
+  - { name: total, label: "total", type: number, step: 1, default: 5 }
+  - { name: titulo, label: "título", type: text, default: "Título do passo" }
+  - { name: subtitulo, label: "subtítulo", type: text }

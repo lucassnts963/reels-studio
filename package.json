@@ -9,6 +9,7 @@
     "render": "node cli.mjs render"
   },
   "dependencies": {
+    "js-yaml": "^5.2.1",
     "puppeteer-core": "^24.0.0"
   },
   "pnpm": {

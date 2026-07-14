@@ -16,6 +16,8 @@ function useNarrow() {
 function StudioApp() {
   const [online] = useOnline();
   const narrow = useNarrow();
+  const [catalog, setCatalog] = React.useState(SCENE_CATALOG_FALLBACK);
+  React.useEffect(() => { loadSceneCatalog().then(setCatalog); }, [online]);
   const [slug, setSlug] = React.useState('');
   const [cfg, setCfg] = React.useState(null);
   const [assets, setAssets] = React.useState({ gravacoes: [], prints: [], audioCenas: [], narracaoRaw: null, narracaoLimpo: null });
@@ -153,7 +155,7 @@ function StudioApp() {
   };
 
   const addScene = (catalogItem) => {
-    const scene = { id: newSceneId(), ...catalogItem.make() };
+    const scene = { id: newSceneId(), ...sceneFromTemplate(catalogItem) };
     commit({ ...cfg, scenes: [...cfg.scenes, scene] });
     setSelection({ kind: 'scene', index: cfg.scenes.length });
     setGallery(false);
@@ -322,7 +324,7 @@ function StudioApp() {
       {selection.kind === 'intro' && <IntroInspector cfg={cfg} patchIntro={patchIntro} />}
       {selection.kind === 'outro' && <OutroInspector cfg={cfg} assets={assets} patchOutro={patchOutro} />}
       {selection.kind === 'scene' && (
-        <SceneInspector slug={slug} cfg={cfg} index={selection.index} assets={assets} assetUrl={assetUrl}
+        <SceneInspector slug={slug} cfg={cfg} index={selection.index} assets={assets} assetUrl={assetUrl} catalog={catalog}
           patchScene={patchScene} onMove={moveScene} onRemove={removeScene}
           onTake={takeForScene} onRemoveAudio={removeSceneAudio} onRemoveCamera={removeSceneCamera} />
       )}
@@ -417,7 +419,7 @@ function StudioApp() {
               onTogglePlay={togglePlay} iframeRef={iframeRef} label={selLabel} online={!!online} />
           </div>
         )}
-        {gallery && <LayoutGallery onPick={addScene} onClose={() => setGallery(false)} />}
+        {gallery && <LayoutGallery catalog={catalog} onPick={addScene} onClose={() => setGallery(false)} />}
         {jsonView && <JsonModal cfg={cfg} onClose={() => setJsonView(false)} />}
       </div>
     );
@@ -434,7 +436,7 @@ function StudioApp() {
             onTogglePlay={togglePlay} iframeRef={iframeRef} label={selLabel} online={!!online} />}
       <div className="panel-inspector">{inspector}</div>
       <Timeline cfg={cfg} selection={selection} onSelect={setSelection} onAddScene={() => setGallery(true)} />
-      {gallery && <LayoutGallery onPick={addScene} onClose={() => setGallery(false)} />}
+      {gallery && <LayoutGallery catalog={catalog} onPick={addScene} onClose={() => setGallery(false)} />}
       {jsonView && <JsonModal cfg={cfg} onClose={() => setJsonView(false)} />}
     </div>
   );

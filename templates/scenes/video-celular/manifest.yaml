@@ -1,0 +1,11 @@
+id: video-celular
+name: "Vídeo · Celular"
+desc: "Gravação de tela do celular em mockup de telefone"
+formato: tutorial
+order: 50
+scene: { type: video, layout: celular, duration: 5 }
+fields:
+  - { name: badge, label: "badge", type: text }
+  - { name: titulo, label: "título", type: text }
+  - { name: texto, label: "texto", type: textarea, rows: 2 }
+  - { name: comando, label: "comando (opcional, mono)", type: text, mono: true }

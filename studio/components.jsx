@@ -359,7 +359,34 @@ function SceneAudioRecorder({ scene, assetUrl, onUse, onRemoveAudio, onRemoveCam
 }
 
 // ── inspector ────────────────────────────────────────────────────────────────
-function SceneInspector({ slug, cfg, index, assets, assetUrl, patchScene, onMove, onRemove, onTake, onRemoveAudio, onRemoveCamera }) {
+// Renderiza UM campo do manifesto (file-driven) usando os editores existentes.
+function SceneField({ field: f, value, onChange, assets }) {
+  const label = f.label || f.name;
+  if (f.type === 'textarea') return <AreaField label={label} value={value} rows={f.rows || 3} placeholder={f.placeholder} onChange={onChange} />;
+  if (f.type === 'number') return <NumField label={label} value={value} step={f.step || 0.1} onChange={(v) => onChange(v === '' ? undefined : v)} />;
+  if (f.type === 'check') return <label className="check"><input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} /> {label}</label>;
+  if (f.type === 'select') return <SelectField label={label} value={value} options={(f.options || []).map(o => Array.isArray(o) ? o : [o, o])} onChange={onChange} />;
+  if (f.type === 'asset') return <AssetSelect label={label} value={value} options={(f.kind === 'print' ? assets.prints : assets.gravacoes) || []} onChange={onChange} />;
+  if (f.type === 'group') {
+    const g = value || {};
+    return <F label={label}><div className="row">{(f.fields || []).map(sf => (
+      <NumField key={sf.name} label={sf.label || sf.name} value={g[sf.name]} step={sf.step || 1} onChange={(v) => onChange({ ...g, [sf.name]: v === '' ? 0 : +v })} />
+    ))}</div></F>;
+  }
+  if (f.type === 'list') {
+    return <ListEditor label={label} items={value} min={f.min || 0} max={f.max || 99}
+      makeItem={() => Object.fromEntries((f.item || []).map(sf => [sf.name, sf.default ?? '']))}
+      onChange={onChange}
+      renderItem={(it, set) => (<div className="row">{(f.item || []).map(sf => (
+        <input key={sf.name} type="text" className={sf.width ? 'fixed' : ''}
+          style={{ ...(sf.width ? { width: sf.width, flex: 'none' } : {}), ...(sf.mono ? { fontFamily: 'var(--mono)' } : {}) }}
+          placeholder={sf.label || sf.name} value={it[sf.name] ?? ''} onChange={(e) => set({ ...it, [sf.name]: e.target.value })} />
+      ))}</div>)} />;
+  }
+  return <TextField label={label} value={value} mono={f.mono} placeholder={f.placeholder} onChange={onChange} />;
+}
+
+function SceneInspector({ slug, cfg, index, assets, assetUrl, catalog, patchScene, onMove, onRemove, onTake, onRemoveAudio, onRemoveCamera }) {
   const s = cfg.scenes[index];
   if (!s) return null;
   const meta = TYPE_META[s.type] || TYPE_META.video;
@@ -368,6 +395,8 @@ function SceneInspector({ slug, cfg, index, assets, assetUrl, patchScene, onMove
   const patch = (p) => patchScene(index, p);
   const mediaOptions = s.type === 'video' ? (assets.gravacoes || []) : (assets.prints || []);
   const durLocked = !!s.audio?.src;
+  const tpl = templateForScene(catalog, s);        // manifesto que dirige os campos
+  const tplFields = tpl?.fields || [];
 
   return (
     <React.Fragment>
@@ -389,15 +418,6 @@ function SceneInspector({ slug, cfg, index, assets, assetUrl, patchScene, onMove
             </F>
           </div>
         </Group>
-
-        {s.type === 'camera-intro' && (
-          <Group title="abertura (talking-head)">
-            <div className="hint">grave o take <b>com câmera</b> abaixo: você aparece grande na tela e o áudio vira a narração desta cena.</div>
-            <TextField label="badge (pílula pequena, opcional)" value={s.badge} onChange={(v) => patch({ badge: v })} />
-            <TextField label="título" value={s.titulo} onChange={(v) => patch({ titulo: v })} />
-            <TextField label="subtítulo" value={s.subtitulo} onChange={(v) => patch({ subtitulo: v })} />
-          </Group>
-        )}
 
         {isMedia && (
           <Group title="mídia">
@@ -423,77 +443,13 @@ function SceneInspector({ slug, cfg, index, assets, assetUrl, patchScene, onMove
           </Group>
         )}
 
-        {s.type === 'passo' && (
-          <Group title="cartão de passo">
-            <div className="row">
-              <NumField label="número" value={s.numero} step={1} onChange={(v) => patch({ numero: v === '' ? 1 : v })} />
-              <NumField label="total" value={s.total} step={1} onChange={(v) => patch({ total: v === '' ? 1 : v })} />
-            </div>
-            <TextField label="título" value={s.titulo} onChange={(v) => patch({ titulo: v })} />
-            <TextField label="subtítulo" value={s.subtitulo} onChange={(v) => patch({ subtitulo: v })} />
-          </Group>
-        )}
-
-        {s.type === 'codigo' && (
-          <Group title="terminal">
-            <TextField label="título da janela" value={s.titulo} onChange={(v) => patch({ titulo: v })} mono />
-            <F label="linhas">
-              <div className="linhas-editor">
-                {(s.linhas || []).map((l, li) => (
-                  <div className="linha" key={li}>
-                    <input className="prompt" type="text" value={l.prompt ?? '$'} onChange={(e) => {
-                      const linhas = s.linhas.map((x, xi) => xi === li ? { ...x, prompt: e.target.value } : x);
-                      patch({ linhas });
-                    }} />
-                    <input className="texto" type="text" value={l.texto ?? ''} onChange={(e) => {
-                      const linhas = s.linhas.map((x, xi) => xi === li ? { ...x, texto: e.target.value } : x);
-                      patch({ linhas });
-                    }} />
-                    <button className="icon-btn" onClick={() => patch({ linhas: s.linhas.filter((_, xi) => xi !== li) })}><Ic.trash /></button>
-                  </div>
-                ))}
-                <button className="btn sm" onClick={() => patch({ linhas: [...(s.linhas || []), { prompt: '$', texto: '' }] })}><Ic.plus /> linha</button>
-              </div>
-            </F>
-            <TextField label="legenda (abaixo do terminal)" value={s.caption} onChange={(v) => patch({ caption: v })} />
-          </Group>
-        )}
-
-        {isMedia && layout === 'desktop' && (
-          <Group title="janela de navegador">
-            <TextField label="URL na barra (decorativa)" value={s.url} onChange={(v) => patch({ url: v })} mono />
-            <div className="row">
-              <NumField label="nº do passo (badge)" value={s.numero} step={1} onChange={(v) => patch({ numero: v === '' ? undefined : v })} />
-            </div>
-            <TextField label="legenda" value={s.caption} onChange={(v) => patch({ caption: v })} />
-          </Group>
-        )}
-
-        {isMedia && layout === 'celular' && (
-          <Group title="painel do celular">
-            <TextField label="badge" value={s.badge} onChange={(v) => patch({ badge: v })} />
-            <TextField label="título" value={s.titulo} onChange={(v) => patch({ titulo: v })} />
-            <AreaField label="texto" value={s.texto} onChange={(v) => patch({ texto: v })} rows={2} />
-            <TextField label="comando (opcional, mono)" value={s.comando} onChange={(v) => patch({ comando: v })} mono />
-          </Group>
-        )}
-
-        {isMedia && layout === 'callout' && (
-          <Group title="destaque">
-            <div className="row">
-              <NumField label="x" value={s.highlight?.x} step={10} onChange={(v) => patch({ highlight: { ...(s.highlight || {}), x: +v || 0 } })} />
-              <NumField label="y" value={s.highlight?.y} step={10} onChange={(v) => patch({ highlight: { ...(s.highlight || {}), y: +v || 0 } })} />
-              <NumField label="larg." value={s.highlight?.w} step={10} onChange={(v) => patch({ highlight: { ...(s.highlight || {}), w: +v || 0 } })} />
-              <NumField label="alt." value={s.highlight?.h} step={10} onChange={(v) => patch({ highlight: { ...(s.highlight || {}), h: +v || 0 } })} />
-            </div>
-            <TextField label="título da anotação" value={s.title} onChange={(v) => patch({ title: v })} />
-            <AreaField label="texto da anotação" value={s.body} onChange={(v) => patch({ body: v })} rows={2} />
-          </Group>
-        )}
-
-        {isMedia && layout === 'raw' && (
-          <Group title="sem moldura">
-            <TextField label="legenda" value={s.caption} onChange={(v) => patch({ caption: v })} />
+        {/* campos do template (file-driven): dirigidos pelo manifesto da cena. */}
+        {tplFields.length > 0 && (
+          <Group title={tpl?.name || 'conteúdo'}>
+            {s.type === 'camera-intro' && <div className="hint">grave o take <b>com câmera</b> abaixo: você aparece grande na tela e o áudio vira a narração desta cena.</div>}
+            {tplFields.map((f) => (
+              <SceneField key={f.name} field={f} value={s[f.name]} assets={assets} onChange={(v) => patch({ [f.name]: v })} />
+            ))}
           </Group>
         )}
 
@@ -572,6 +528,20 @@ function OutroInspector({ cfg, assets, patchOutro }) {
   );
 }
 
+// Seletor de tema: lista /api/themes; grava cfg.theme (default "elucas").
+function ThemeSelect({ value, online, onChange }) {
+  const [themes, setThemes] = React.useState(null);
+  React.useEffect(() => { if (online) fetch('/api/themes').then(r => r.json()).then(setThemes).catch(() => setThemes([])); }, [online]);
+  const opts = (themes || [{ id: 'elucas', name: 'elucas.dev (padrão)' }]).map(t => [t.id, t.name]);
+  return (
+    <F label="tema (visual)">
+      <select value={value || 'elucas'} onChange={(e) => onChange(e.target.value)} style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>
+        {opts.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+      </select>
+    </F>
+  );
+}
+
 function ProjectInspector({ slug, cfg, assets, patchCfg, onCleanGlobalAudio, cleaning, onUploadNarracao, online, onSync, syncMsg, onExportZip }) {
   const hasSceneAudio = (cfg.scenes || []).some(s => s.audio?.src);
   const [host, setHost] = React.useState(Sync.getHost());
@@ -598,6 +568,7 @@ function ProjectInspector({ slug, cfg, assets, patchCfg, onCleanGlobalAudio, cle
         <Group title="identificação">
           <TextField label="tag (canto superior)" value={cfg.tag} onChange={(v) => patchCfg({ tag: v })} />
           <TextField label="título do vídeo" value={cfg.titulo} onChange={(v) => patchCfg({ titulo: v })} />
+          <ThemeSelect value={cfg.theme} online={online} onChange={(v) => patchCfg({ theme: v })} />
         </Group>
 
         <Group title="capa (thumbnail)">
@@ -734,23 +705,28 @@ const THUMBS = {
   </Thumb>),
 };
 
-function LayoutGallery({ onPick, onClose }) {
+// thumb de um template: usa o svg do manifesto (thumbSvg) ou o built-in de fallback.
+function TemplateThumb({ entry }) {
+  if (entry.thumbSvg) return <div className="thumb" dangerouslySetInnerHTML={{ __html: entry.thumbSvg }} />;
+  const T = THUMBS[entry.id];
+  return T ? <T /> : <svg className="thumb" viewBox="0 0 160 90"><rect width="160" height="90" fill="#16161A" /></svg>;
+}
+
+function LayoutGallery({ catalog, onPick, onClose }) {
+  const items = catalog || SCENE_CATALOG_FALLBACK;
   return (
     <div className="modal-scrim" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <h3>Nova cena</h3>
         <div className="sub">escolha o layout — dá para trocar depois no inspector.</div>
         <div className="gallery">
-          {SCENE_CATALOG.map((c) => {
-            const T = THUMBS[c.key];
-            return (
-              <button key={c.key} className="g-card" onClick={() => onPick(c)}>
-                <T />
-                <div className="g-name">{c.name}</div>
-                <div className="g-desc">{c.desc}</div>
-              </button>
-            );
-          })}
+          {items.map((c) => (
+            <button key={c.id} className="g-card" onClick={() => onPick(c)}>
+              <TemplateThumb entry={c} />
+              <div className="g-name">{c.name}</div>
+              <div className="g-desc">{c.desc}</div>
+            </button>
+          ))}
         </div>
       </div>
     </div>
@@ -785,6 +761,7 @@ function ImportMenu({ online, onDone, onOpen }) {
   const [open, setOpen] = React.useState(false);
   const [busy, setBusy] = React.useState('');
   const rvsRef = React.useRef(null), jsonRef = React.useRef(null), planRef = React.useRef(null);
+  const themeRef = React.useRef(null), tplRef = React.useRef(null);
   const wrapRef = React.useRef(null);
   React.useEffect(() => {
     const onDoc = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
@@ -830,6 +807,20 @@ function ImportMenu({ online, onDone, onOpen }) {
     } catch (e) { alert('erro ao importar planilha: ' + (e.message || e)); }
     setBusy('');
   };
+  const importPack = (isTheme) => async (file) => {
+    const kind = isTheme ? 'tema' : 'template';
+    const id = (prompt(`id para o ${kind} importado:`, slugify(file.name.replace(/\.(rvtheme|rvtemplate)$/i, ''))) || '').trim();
+    if (!id) return;
+    if (!SLUG_RE_UI.test(id)) return alert('id inválido — letras minúsculas, números e hífens.');
+    setBusy(kind);
+    try {
+      const route = isTheme ? '/api/import-theme' : '/api/import-template';
+      const res = await fetch(route + '?id=' + encodeURIComponent(id), { method: 'POST', body: await file.arrayBuffer() });
+      const j = await res.json(); if (!res.ok) throw new Error(j.error || 'falha');
+      onDone && onDone(); alert(`✓ ${kind} "${id}" importado`);
+    } catch (e) { alert(`erro ao importar ${kind}: ` + (e.message || e)); }
+    setBusy('');
+  };
 
   return (
     <div className="import-menu" ref={wrapRef}>
@@ -840,11 +831,15 @@ function ImportMenu({ online, onDone, onOpen }) {
           <button onClick={() => { setOpen(false); rvsRef.current?.click(); }}><b>.rvs</b><span>projeto completo (com mídia)</span></button>
           <button onClick={() => { setOpen(false); jsonRef.current?.click(); }}><b>JSON</b><span>só a definição, sem mídia</span></button>
           <button onClick={() => { setOpen(false); planRef.current?.click(); }}><b>planilha</b><span>lote de quizzes (.xlsx)</span></button>
+          <button onClick={() => { setOpen(false); themeRef.current?.click(); }}><b>tema</b><span>visual (.rvtheme)</span></button>
+          <button onClick={() => { setOpen(false); tplRef.current?.click(); }}><b>template</b><span>layout de cena (.rvtemplate)</span></button>
         </div>
       )}
       <input ref={rvsRef} type="file" accept=".rvs" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files[0]; e.target.value = ''; if (f) importRvs(f); }} />
       <input ref={jsonRef} type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files[0]; e.target.value = ''; if (f) importJson(f); }} />
       <input ref={planRef} type="file" accept=".xlsx,.xls,.csv" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files[0]; e.target.value = ''; if (f) importPlanilha(f); }} />
+      <input ref={themeRef} type="file" accept=".rvtheme" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files[0]; e.target.value = ''; if (f) importPack(true)(f); }} />
+      <input ref={tplRef} type="file" accept=".rvtemplate" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files[0]; e.target.value = ''; if (f) importPack(false)(f); }} />
     </div>
   );
 }

@@ -1,0 +1,10 @@
+id: video-desktop
+name: "Vídeo · PC"
+desc: "Gravação de tela do computador em janela de navegador"
+formato: tutorial
+order: 40
+scene: { type: video, layout: desktop, duration: 5 }
+fields:
+  - { name: url, label: "URL na barra (decorativa)", type: text, mono: true }
+  - { name: numero, label: "nº do passo (badge)", type: number, step: 1 }
+  - { name: caption, label: "legenda", type: text }

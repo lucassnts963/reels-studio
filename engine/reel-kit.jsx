@@ -2,13 +2,24 @@
 // Loads AFTER animations.jsx, so Stage/Sprite/useSprite/Easing/clamp are on window.
 // Assigns brand tokens + small presentational helpers to window.
 
-const BRAND = {
+// Tokens da marca. Os valores abaixo são o DEFAULT (tema "elucas"); o player
+// injeta window.__THEME (JSON de themes/<id>/theme.yaml) e sobrescreve o que
+// vier — sem tema, nada muda. handle/handleAt são as strings de rodapé/topo.
+const THEME_DEFAULT = {
   ink: '#0C0C0F', card: '#16161A', red: '#E5484D', redSoft: '#F08A8D',
   tint: 'rgba(229,72,77,0.12)', tintBorder: 'rgba(229,72,77,0.30)',
   fg: '#ECECEF', body: '#B4B4BC', mute: '#87878F', line: 'rgba(255,255,255,0.09)',
+  glow: 'rgba(229,72,77,0.18)',
   sans: "'IBM Plex Sans', system-ui, sans-serif",
   mono: "'IBM Plex Mono', ui-monospace, monospace",
+  handle: 'elucas.dev', handleAt: '@elucas.dev', grid: 'dots',
 };
+const _T = (typeof window !== 'undefined' && window.__THEME) || {};
+const BRAND = Object.assign({}, THEME_DEFAULT, _T.colors, _T.fonts, {
+  handle: _T.brand?.handle ?? THEME_DEFAULT.handle,
+  handleAt: _T.brand?.handleAt ?? THEME_DEFAULT.handleAt,
+  grid: _T.backdrop?.grid ?? THEME_DEFAULT.grid,
+});
 
 // Resolve um caminho de asset para URL do servidor. Caminhos novos são
 // relativos ao projeto ("assets/gravacoes/foo.mp4") e usam __ASSET_BASE
@@ -35,7 +46,7 @@ function Backdrop({ glow = true, grid = 'dots' }) {
       {glow && <div style={{
         position: 'absolute', left: '50%', top: -280, transform: 'translateX(-50%)',
         width: 940, height: 660, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(229,72,77,.18), transparent 70%)',
+        background: `radial-gradient(circle, ${BRAND.glow}, transparent 70%)`,
       }} />}
     </div>
   );
@@ -50,7 +61,7 @@ function TopBar({ tag }) {
       fontFamily: BRAND.mono,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 15, color: BRAND.fg, fontWeight: 600, fontSize: 32, letterSpacing: '.01em' }}>
-        <span style={{ width: 17, height: 17, borderRadius: '50%', background: BRAND.red, display: 'inline-block' }} />elucas.dev
+        <span style={{ width: 17, height: 17, borderRadius: '50%', background: BRAND.red, display: 'inline-block' }} />{BRAND.handle}
       </div>
       <div style={{ color: BRAND.red, fontWeight: 600, letterSpacing: '.22em', textTransform: 'uppercase', fontSize: 26 }}>{tag}</div>
     </div>
@@ -61,7 +72,7 @@ function TopBar({ tag }) {
 function Handle({ sub, y = 1690 }) {
   return (
     <div style={{ position: 'absolute', left: 0, right: 0, top: y, textAlign: 'center', fontFamily: BRAND.mono }}>
-      <div style={{ color: BRAND.fg, fontSize: 40, fontWeight: 600 }}>@elucas.dev</div>
+      <div style={{ color: BRAND.fg, fontSize: 40, fontWeight: 600 }}>{BRAND.handleAt}</div>
       {sub && <div style={{ color: BRAND.mute, fontSize: 27, marginTop: 12 }}>{sub}</div>}
     </div>
   );

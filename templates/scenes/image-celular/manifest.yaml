@@ -1,0 +1,11 @@
+id: image-celular
+name: "Print · Celular"
+desc: "Print de tela do celular em mockup de telefone"
+formato: tutorial
+order: 70
+scene: { type: image, layout: celular, duration: 4 }
+fields:
+  - { name: badge, label: "badge", type: text }
+  - { name: titulo, label: "título", type: text }
+  - { name: texto, label: "texto", type: textarea, rows: 2 }
+  - { name: comando, label: "comando (opcional, mono)", type: text, mono: true }

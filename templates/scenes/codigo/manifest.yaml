@@ -1,0 +1,16 @@
+id: codigo
+name: "Terminal"
+desc: "Janela de terminal com comandos"
+formato: tutorial
+order: 30
+scene: { type: codigo, duration: 6 }
+fields:
+  - { name: titulo, label: "título da janela", type: text, mono: true, default: "terminal" }
+  - name: linhas
+    label: "linhas"
+    type: list
+    default: [{ prompt: "$", texto: "comando" }]
+    item:
+      - { name: prompt, type: text, mono: true, width: 52, default: "$" }
+      - { name: texto, type: text, mono: true }
+  - { name: caption, label: "legenda (abaixo do terminal)", type: text }

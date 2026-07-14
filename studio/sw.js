@@ -4,7 +4,7 @@
 // em background quando há rede. API, player, content e assets NUNCA passam
 // pelo cache — sempre rede (o offline deles é tratado pelo IndexedDB do app).
 
-const CACHE = 'reels-studio-studio-v8';
+const CACHE = 'reels-studio-studio-v10';
 const SHELL = [
   '/studio/',
   '/studio/index.html',

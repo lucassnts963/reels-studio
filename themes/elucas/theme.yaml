@@ -1,0 +1,39 @@
+# Tema padrão — elucas.dev. É o visual de fábrica; qualquer projeto sem
+# "theme" no project.json usa este. Copie esta pasta para criar um tema novo
+# (ex.: themes/dark-blue/theme.yaml) e selecione no Studio.
+
+id: elucas
+name: elucas.dev (padrão)
+
+# Marca: aparece no topo (TopBar) e no rodapé (Handle) das cenas.
+brand:
+  handle: elucas.dev      # canto superior esquerdo
+  handleAt: "@elucas.dev" # rodapé
+
+# Cores (os 12 tokens). Aceita hex ou rgba().
+colors:
+  ink: "#0C0C0F"          # fundo do vídeo / molduras de app
+  card: "#16161A"         # cartões, terminais, keycaps
+  red: "#E5484D"          # cor de acento da marca
+  redSoft: "#F08A8D"      # badges de destaque
+  tint: "rgba(229,72,77,0.12)"     # fundo de badge/opção correta
+  tintBorder: "rgba(229,72,77,0.30)"
+  fg: "#ECECEF"           # texto principal
+  body: "#B4B4BC"         # texto secundário
+  mute: "#87878F"         # texto terciário/legendas
+  line: "rgba(255,255,255,0.09)"   # divisórias
+  glow: "rgba(229,72,77,0.18)"     # brilho radial atrás das cenas
+
+# Fontes: string CSS de font-family. Para usar uma fonte própria, liste os
+# arquivos em fontFaces (abaixo) e referencie o family aqui.
+fonts:
+  sans: "'IBM Plex Sans', system-ui, sans-serif"   # títulos/corpo
+  mono: "'IBM Plex Mono', ui-monospace, monospace" # código/eyebrows
+
+# @font-face opcionais (arquivos woff2 em themes/<id>/assets/). Vazio = usa as
+# fontes do sistema/carregadas globalmente (IBM Plex, no default).
+fontFaces: []
+
+# Fundo padrão das cenas: "dots" | "cells".
+backdrop:
+  grid: dots

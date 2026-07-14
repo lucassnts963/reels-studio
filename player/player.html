@@ -35,6 +35,21 @@
   // base para resolver caminhos de asset relativos ao projeto (ex.: "assets/gravacoes/foo.mp4").
   window.__ASSET_BASE = '/projects/' + slug + '/';
 
+  // tema (file-driven): o reel-kit lê window.__THEME ao ser avaliado, então
+  // buscamos ANTES do loop de arquivos. Sem tema, o reel-kit usa o default.
+  const themeId = cfg.theme || 'elucas';
+  const theme = await fetch('/api/theme/' + encodeURIComponent(themeId)).then(r => r.ok ? r.json() : null).catch(() => null);
+  window.__THEME = theme || null;
+  // fontes próprias do tema: injeta @font-face apontando pros assets do tema.
+  for (const ff of (theme?.fontFaces || [])) {
+    if (!ff.src) continue;
+    const s = document.createElement('style');
+    s.textContent = `@font-face{font-family:${JSON.stringify(ff.family)};` +
+      (ff.weight ? `font-weight:${ff.weight};` : '') + (ff.style ? `font-style:${ff.style};` : '') +
+      `src:url(${JSON.stringify(ff.src)}) format('woff2');font-display:block;}`;
+    document.head.appendChild(s);
+  }
+
   const files = [
     '/engine/animations.jsx',
     '/engine/reel-kit.jsx',
@@ -54,14 +69,18 @@
   root.render(React.createElement(Comp));
 
   // Garante as fontes carregadas antes de sinalizar pronto (o render depende disso).
-  await Promise.all([
+  const fontJobs = [
     document.fonts.load("700 20px 'IBM Plex Sans'"),
     document.fonts.load("600 20px 'IBM Plex Sans'"),
     document.fonts.load("500 20px 'IBM Plex Sans'"),
     document.fonts.load("700 20px 'IBM Plex Mono'"),
     document.fonts.load("600 20px 'IBM Plex Mono'"),
     document.fonts.load("500 20px 'IBM Plex Mono'"),
-  ]);
+  ];
+  for (const ff of (theme?.fontFaces || [])) {
+    fontJobs.push(document.fonts.load(`${ff.weight || 400} 20px ${JSON.stringify(ff.family)}`).catch(() => {}));
+  }
+  await Promise.all(fontJobs);
   await document.fonts.ready;
 
   // Controle externo (Studio): congelar num frame e comandar seek/play via

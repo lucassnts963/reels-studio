@@ -36,6 +36,7 @@ import os from 'node:os';
 import zlib from 'node:zlib';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { load as yamlLoad } from 'js-yaml';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
@@ -60,6 +61,58 @@ const ASSET_SUBDIR = {
 const assetDir = (slug, kind) => path.join(projectDir(slug), ...ASSET_SUBDIR[kind].split('/'));
 const relAsset = (kind, filename) => ASSET_SUBDIR[kind] + '/' + filename; // grava no JSON
 const projPath = (slug, rel) => path.join(projectDir(slug), rel);          // resolve p/ disco
+
+// Temas e templates de cena são arquivos YAML autorais (mais fáceis de escrever
+// à mão). O YAML é parseado SÓ aqui no Node — o navegador sempre recebe JSON via
+// rota. readYaml devolve null (com aviso) se o arquivo estiver inválido, sem
+// derrubar o servidor.
+const THEMES = path.join(ROOT, 'themes');
+const SCENE_TEMPLATES = path.join(ROOT, 'templates', 'scenes');
+function readYaml(file) {
+  try { return yamlLoad(fs.readFileSync(file, 'utf8')); }
+  catch (e) { console.warn(`  ⚠ YAML inválido em ${path.relative(ROOT, file)}: ${String(e.message || e).split('\n')[0]}`); return null; }
+}
+
+// Lista os temas instalados (pastas em themes/ com theme.yaml).
+function listThemes() {
+  if (!fs.existsSync(THEMES)) return [];
+  return fs.readdirSync(THEMES, { withFileTypes: true })
+    .filter(d => d.isDirectory() && fs.existsSync(path.join(THEMES, d.name, 'theme.yaml')))
+    .map(d => {
+      const t = readYaml(path.join(THEMES, d.name, 'theme.yaml')) || {};
+      const hasPreview = fs.existsSync(path.join(THEMES, d.name, 'preview.png'));
+      return { id: d.name, name: t.name || d.name, preview: hasPreview ? `/themes/${d.name}/preview.png` : null };
+    })
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+// Resolve um tema para JSON (theme.yaml + fontFaces com src virando URL do tema).
+function loadTheme(id) {
+  const file = path.join(THEMES, id, 'theme.yaml');
+  if (!fs.existsSync(file)) return null;
+  const t = readYaml(file);
+  if (!t) return null;
+  t.id = id;
+  (t.fontFaces || []).forEach(ff => { if (ff.src && !ff.src.startsWith('/')) ff.src = `/themes/${id}/${ff.src}`; });
+  return t;
+}
+
+// Lista os manifests de template de cena (templates/scenes/<id>/manifest.yaml),
+// resolvendo o thumb (svg inline do arquivo, se houver) para o Studio.
+function listSceneTemplates() {
+  if (!fs.existsSync(SCENE_TEMPLATES)) return [];
+  return fs.readdirSync(SCENE_TEMPLATES, { withFileTypes: true })
+    .filter(d => d.isDirectory() && fs.existsSync(path.join(SCENE_TEMPLATES, d.name, 'manifest.yaml')))
+    .map(d => {
+      const man = readYaml(path.join(SCENE_TEMPLATES, d.name, 'manifest.yaml'));
+      if (!man) return null;
+      man.id = man.id || d.name;
+      const thumbFile = path.join(SCENE_TEMPLATES, d.name, man.thumb || 'thumb.svg');
+      if (fs.existsSync(thumbFile)) man.thumbSvg = fs.readFileSync(thumbFile, 'utf8');
+      return man;
+    })
+    .filter(Boolean);
+}
 
 const flag = (name, fallback) => {
   const i = args.indexOf('--' + name);
@@ -143,6 +196,15 @@ async function handleApi(req, res, url) {
     return sendJson(res, 200, listSlugs());
   }
 
+  // temas: lista (id/name/preview). O tema resolvido /api/theme/:id fica após `let r`.
+  if (url.pathname === '/api/themes') {
+    return sendJson(res, 200, listThemes());
+  }
+  // catálogo de cenas: todos os manifests (manifest.yaml -> JSON) para a galeria/inspector.
+  if (url.pathname === '/api/scene-templates') {
+    return sendJson(res, 200, listSceneTemplates());
+  }
+
   // lista todos os projetos com seu formato (o Studio filtra/busca na UI).
   if (url.pathname === '/api/projects') {
     const items = listSlugs().map((slug) => {
@@ -163,6 +225,10 @@ async function handleApi(req, res, url) {
   }
 
   let r;
+  if ((r = m(/^\/api\/theme\/([a-z0-9-]+)$/i))) {
+    const t = loadTheme(r[1]);
+    return t ? sendJson(res, 200, t) : sendJson(res, 404, { error: 'tema não encontrado' });
+  }
   if ((r = m(/^\/api\/skeleton\/([a-z]+)$/))) {
     const skeleton = SKELETONS[r[1]];
     return skeleton ? sendJson(res, 200, skeleton) : sendJson(res, 404, { error: 'formato desconhecido' });
@@ -246,6 +312,28 @@ async function handleApi(req, res, url) {
       }
       const cfg = JSON.parse(fs.readFileSync(projectJson(slug), 'utf8'));
       return sendJson(res, 200, { ok: true, slug, formato: cfg.formato || '?' });
+    } catch (e) {
+      return sendJson(res, 500, { error: String(e.message || e) });
+    }
+  }
+
+  // importa um .rvtheme -> themes/<id>/  ou  .rvtemplate -> templates/scenes/<id>/.
+  if ((url.pathname === '/api/import-theme' || url.pathname === '/api/import-template') && req.method === 'POST') {
+    const isTheme = url.pathname === '/api/import-theme';
+    const id = url.searchParams.get('id');
+    if (!id || !SLUG_RE.test(id)) return sendJson(res, 400, { error: 'id inválido' });
+    const destBase = isTheme ? path.join(THEMES, id) : path.join(SCENE_TEMPLATES, id);
+    if (fs.existsSync(destBase) && url.searchParams.get('overwrite') !== '1') {
+      return sendJson(res, 409, { error: `${isTheme ? 'themes' : 'templates/scenes'}/${id}/ já existe` });
+    }
+    try {
+      for (const e of zipRead(await readBody(req))) {
+        const to = path.join(destBase, e.name);
+        if (!to.startsWith(destBase)) continue; // anti-traversal
+        fs.mkdirSync(path.dirname(to), { recursive: true });
+        fs.writeFileSync(to, e.data);
+      }
+      return sendJson(res, 200, { ok: true, id });
     } catch (e) {
       return sendJson(res, 500, { error: String(e.message || e) });
     }
@@ -787,6 +875,20 @@ function zipWrite(entries) { // entries: [{ name, data: Buffer }]
   return Buffer.concat([...parts, ...central, eocd]);
 }
 
+// Coleta todos os arquivos de um diretório como entries de zip (caminhos
+// relativos, POSIX) — usado por export/.rvs/.rvtheme/.rvtemplate.
+function dirToZipEntries(dir) {
+  const entries = [];
+  const walk = (d, base) => {
+    for (const f of fs.readdirSync(d, { withFileTypes: true })) {
+      const abs = path.join(d, f.name), rel = (base ? base + '/' : '') + f.name;
+      if (f.isDirectory()) walk(abs, rel); else entries.push({ name: rel, data: fs.readFileSync(abs) });
+    }
+  };
+  walk(dir, '');
+  return entries;
+}
+
 function zipRead(buf) {
   let i = buf.length - 22;
   while (i >= 0 && buf.readUInt32LE(i) !== 0x06054b50) i--;
@@ -952,17 +1054,21 @@ async function main() {
     // Empacota projects/<slug>/ num <slug>.rvs (projeto na raiz do zip).
     const slug = args[1];
     if (!slug || !fs.existsSync(projectJson(slug))) { console.error('uso: node cli.mjs export <slug>'); process.exit(1); }
-    const dir = projectDir(slug), entries = [];
-    const walk = (d, base) => {
-      for (const f of fs.readdirSync(d, { withFileTypes: true })) {
-        const abs = path.join(d, f.name), rel = (base ? base + '/' : '') + f.name;
-        if (f.isDirectory()) walk(abs, rel); else entries.push({ name: rel, data: fs.readFileSync(abs) });
-      }
-    };
-    walk(dir, '');
+    const entries = dirToZipEntries(projectDir(slug));
     const out = path.join(ROOT, slug + '.rvs');
     fs.writeFileSync(out, zipWrite(entries));
     console.log(`✓ ${slug}.rvs — ${entries.length} arquivos, ${(fs.statSync(out).size / 1048576).toFixed(1)} MB`);
+  } else if (cmd === 'export-theme' || cmd === 'export-template') {
+    // Empacota themes/<id>/ (.rvtheme) ou templates/scenes/<id>/ (.rvtemplate).
+    const isTheme = cmd === 'export-theme';
+    const id = args[1];
+    const dir = isTheme ? path.join(THEMES, id) : path.join(SCENE_TEMPLATES, id);
+    const ext = isTheme ? '.rvtheme' : '.rvtemplate';
+    if (!id || !fs.existsSync(dir)) { console.error(`uso: node cli.mjs ${cmd} <id>`); process.exit(1); }
+    const entries = dirToZipEntries(dir);
+    const out = path.join(ROOT, id + ext);
+    fs.writeFileSync(out, zipWrite(entries));
+    console.log(`✓ ${id}${ext} — ${entries.length} arquivos`);
   } else if (cmd === 'migrate') {
     // Move content/<slug>.json + pastas por-tipo para projects/<slug>/ (uma vez).
     const dry = hasFlag('dry-run');
@@ -994,9 +1100,23 @@ async function main() {
     }
     console.log(dry ? `(dry-run) ${done} projetos migrariam para projects/` : `✓ ${done} projetos migrados para projects/`);
   } else if (cmd === 'import') {
-    // .rvs -> projects/<slug>/  |  planilha .xlsx/.csv (aba "quizzes") -> vários projetos.
+    // .rvs/.rvtheme/.rvtemplate -> pasta certa | .json -> projeto | .xlsx/.csv -> quizzes.
     const file = args[1];
-    if (!file || !fs.existsSync(file)) { console.error('uso: node cli.mjs import <arquivo.rvs | planilha.xlsx|csv>'); process.exit(1); }
+    if (!file || !fs.existsSync(file)) { console.error('uso: node cli.mjs import <arquivo.rvs|.rvtheme|.rvtemplate|.json|planilha.xlsx>'); process.exit(1); }
+    if (/\.(rvtheme|rvtemplate)$/i.test(file)) {
+      const isTheme = /\.rvtheme$/i.test(file);
+      const id = flag('id', path.basename(file).replace(/\.(rvtheme|rvtemplate)$/i, ''));
+      if (!SLUG_RE.test(id)) { console.error('✗ id inválido (use --id)'); process.exit(1); }
+      const destBase = isTheme ? path.join(THEMES, id) : path.join(SCENE_TEMPLATES, id);
+      if (fs.existsSync(destBase)) { console.error(`✗ ${path.relative(ROOT, destBase)}/ já existe`); process.exit(1); }
+      for (const e of zipRead(fs.readFileSync(file))) {
+        const to = path.join(destBase, e.name);
+        if (!to.startsWith(destBase)) continue;
+        fs.mkdirSync(path.dirname(to), { recursive: true }); fs.writeFileSync(to, e.data);
+      }
+      console.log(`✓ importado para ${path.relative(ROOT, destBase)}/`);
+      return;
+    }
     if (/\.rvs$/i.test(file)) {
       const slug = flag('slug', path.basename(file).replace(/\.rvs$/i, ''));
       if (!SLUG_RE.test(slug)) { console.error('✗ slug inválido'); process.exit(1); }
