@@ -1,0 +1,11 @@
+{
+  "name": "reels-studio",
+  "owner": { "name": "Lucas Santos" },
+  "plugins": [
+    {
+      "name": "reels-studio",
+      "source": "./cowork-plugin",
+      "description": "Opera o reels-studio (criar/validar/renderizar/render em lote/importar/exportar) de dentro do Claude Cowork — MCP + skills + comandos."
+    }
+  ]
+}

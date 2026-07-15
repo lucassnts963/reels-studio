@@ -5,18 +5,22 @@
 // estado fazem spawn do `node cli.mjs ...`; o render vira jobs em memória neste
 // processo (que vive durante a sessão) — dispara e consulta status, sem travar.
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Raiz do repo: o plugin roda de dentro dele (CLAUDE_PLUGIN_ROOT) ou, em teste,
-// o pai da pasta mcp/. REELS_ROOT sobrescreve se preciso.
+// Servidor MCP SEM dependências (só Node built-ins) — o plugin roda igual esteja
+// ele referenciado no lugar ou copiado no upload do Cowork.
+// Raiz do repo (onde estão cli.mjs, node_modules, tools/ffmpeg.exe, projects/):
+// REELS_ROOT > CLAUDE_PLUGIN_ROOT > pai de mcp/ — escolhe o primeiro que tem cli.mjs.
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = process.env.REELS_ROOT || process.env.CLAUDE_PLUGIN_ROOT || path.dirname(HERE);
+function resolveRoot() {
+  const cands = [process.env.REELS_ROOT, process.env.CLAUDE_PLUGIN_ROOT, path.dirname(HERE)].filter(Boolean);
+  for (const c of cands) if (fs.existsSync(path.join(c, 'cli.mjs'))) return c;
+  return cands[0] || path.dirname(HERE);
+}
+const ROOT = resolveRoot();
 const CLI = path.join(ROOT, 'cli.mjs');
 const PROJECTS = path.join(ROOT, 'projects');
 
@@ -209,13 +213,31 @@ async function handleCall(name, a = {}) {
   }
 }
 
-const server = new Server({ name: 'reels-studio', version: '1.0.0' }, { capabilities: { tools: {} } });
-server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
-server.setRequestHandler(CallToolRequestSchema, async (req) => {
-  try { return await handleCall(req.params.name, req.params.arguments || {}); }
-  catch (e) { return { content: [{ type: 'text', text: 'erro: ' + String(e.message || e) }], isError: true }; }
+// ── transporte MCP: JSON-RPC 2.0 sobre stdio (linhas), sem dependências ───────
+function send(msg) { process.stdout.write(JSON.stringify(msg) + '\n'); }
+async function dispatch(req) {
+  const { id, method, params } = req;
+  if (method === 'initialize') return send({ jsonrpc: '2.0', id, result: { protocolVersion: params?.protocolVersion || '2024-11-05', capabilities: { tools: {} }, serverInfo: { name: 'reels-studio', version: '1.0.0' } } });
+  if (method === 'notifications/initialized' || method === 'initialized') return; // notificação: sem resposta
+  if (method === 'ping') return send({ jsonrpc: '2.0', id, result: {} });
+  if (method === 'tools/list') return send({ jsonrpc: '2.0', id, result: { tools: TOOLS } });
+  if (method === 'tools/call') {
+    try { const r = await handleCall(params.name, params.arguments || {}); return send({ jsonrpc: '2.0', id, result: r }); }
+    catch (e) { return send({ jsonrpc: '2.0', id, result: { content: [{ type: 'text', text: 'erro: ' + String(e.message || e) }], isError: true } }); }
+  }
+  if (id !== undefined) send({ jsonrpc: '2.0', id, error: { code: -32601, message: 'method not found: ' + method } });
+}
+let _buf = '';
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', (chunk) => {
+  _buf += chunk;
+  let i;
+  while ((i = _buf.indexOf('\n')) >= 0) {
+    const line = _buf.slice(0, i).trim();
+    _buf = _buf.slice(i + 1);
+    if (!line) continue;
+    let req; try { req = JSON.parse(line); } catch { continue; }
+    Promise.resolve(dispatch(req)).catch(() => {});
+  }
 });
-
-const transport = new StdioServerTransport();
-await server.connect(transport);
-console.error(`reels-studio MCP no ar (ROOT=${ROOT})`);
+console.error(`reels-studio MCP no ar (ROOT=${ROOT}${fs.existsSync(CLI) ? '' : ' — ⚠ cli.mjs não encontrado; defina REELS_ROOT'})`);
