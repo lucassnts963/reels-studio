@@ -225,6 +225,8 @@ e o schema de cada formato, incluindo os layouts de cena do `tutorial`.
 - **[docs/temas-templates.md](docs/temas-templates.md)** — temas e templates
   file-driven: criar um tema, um template de cena (tutorial) ou um layout de
   quiz por canal — tudo com YAML, sem código.
+- **[docs/plugin.md](docs/plugin.md)** — plugin do Claude Cowork (MCP + skills + comandos):
+  operar tudo (criar/renderizar/importar/render em lote) de dentro do Cowork.
 - **[docs/saas.md](docs/saas.md)** — roadmap futuro (camada AI/SaaS).
 
 ## Temas e canais
