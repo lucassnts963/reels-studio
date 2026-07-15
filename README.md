@@ -50,7 +50,12 @@ node cli.mjs planilha                       # out/publicacao.xlsx: dia, hora, t�
 node cli.mjs musica --all                   # embute trilha (faixas em musica/) -> out-com-musica/
 ```
 
-Colunas da planilha de import: `slug, tag, hook1, hookSub, question` (linhas separadas por `|`), `optionA..C, correta (A/B/C), reveal, fonte, dificuldade, dia, hora, yt_titulo, yt_descricao, yt_tags`.
+A planilha de import tem **uma aba por formato** — `quizzes`, `listas`, `historias` (uma linha = um vídeo). Colunas comuns: `slug, tag, handleSub, theme, fonte, dificuldade, dia, hora, yt_titulo, yt_descricao, yt_tags`. Específicas:
+- **quizzes**: `hook1, hookSub, question` (linhas por `|`), `optionA..D, correta (A/B/C/D), reveal, template`.
+- **listas**: `hook1, hook2, hookSub, items` (itens por `|`, cada um `badge :: texto`), `ctaTitle, ctaSub`.
+- **historias**: `hook_line1, hook_line2, hook_punch, sections` (seções por `|`, cada uma `eyebrow :: titulo :: body :: punch`; quebra de linha no título com `/`), `cta_top, cta_title`.
+
+O import usa a lib `xlsx` (`pnpm add xlsx` — já é dependência). Detalhes/exemplos de célula em [docs/arquitetura.md](docs/arquitetura.md).
 
 **Música:** baixe faixas liberadas na YouTube Audio Library (studio.youtube.com → Biblioteca de áudio, filtro "Sem atribuição obrigatória") para a pasta `musica/`. O `musica --all` rotaciona as faixas entre os vídeos, com fade-out no final. Upload manual: use `out-com-musica/`; a planilha `out/publicacao.xlsx` tem título/descrição/tags prontos pra copiar e colar, na ordem de publicação (1/hora).
 

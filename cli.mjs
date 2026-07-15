@@ -11,7 +11,7 @@
 //   node cli.mjs render --all                               renderiza todos
 //   node cli.mjs export <slug>                              empacota o projeto num <slug>.rvs (zip)
 //   node cli.mjs import <arquivo.rvs>                       importa um .rvs para projects/<slug>/
-//   node cli.mjs import <planilha.xlsx>                     aba "quizzes" -> vários projetos
+//   node cli.mjs import <planilha.xlsx>                     abas quizzes/listas/historias -> vários projetos
 //   node cli.mjs migrate [--dry-run]                        move content/+pastas antigas p/ projects/
 //   node cli.mjs planilha                                   gera out/publicacao.xlsx (títulos/tags p/ upload manual)
 //   node cli.mjs audio <slug>                                limpa a narração crua -> assets/narracao/limpo/
@@ -965,44 +965,112 @@ function rewriteCfgPaths(cfg, slug) {
   return cfg;
 }
 
-// Importa a planilha de quizzes (aba "quizzes"): cada linha vira um projeto quiz.
-// Aceita um Buffer (rota /api/import-planilha) ou um caminho de arquivo (CLI).
-// Colunas: slug, tag, hook1, hookSub, question (linhas separadas por "|"),
-// optionA..C, correta (A/B/C), reveal, fonte, dificuldade, dia, hora,
-// yt_titulo, yt_descricao, yt_tags.
+// Importa uma planilha de reels curtos: cada linha vira um projeto. Uma aba por
+// formato — "quizzes" (quiz), "listas" (lista), "historias" (historia) — pelo
+// nome da aba (prefixo quiz/lista/histor). Sem aba reconhecida, a primeira é
+// tratada como quizzes (compatível com planilhas antigas). Aceita Buffer (rota
+// /api/import-planilha) ou caminho de arquivo (CLI). Colunas por formato:
+//   comuns:   slug, tag, handleSub, theme, fonte, dificuldade, dia, hora,
+//             yt_titulo, yt_descricao, yt_tags
+//   quiz:     hook1, hookSub, question (linhas por "|"), optionA..D, correta
+//             (A/B/C/D), reveal, template
+//   lista:    hook1, hook2, hookSub, items ("badge :: texto | badge :: texto",
+//             badge vazio vira número), ctaTitle, ctaSub
+//   historia: hook_line1, hook_line2, hook_punch, sections ("eyebrow :: titulo
+//             :: body :: punch | ...", quebra de linha no titulo com "/"),
+//             cta_top, cta_title
+const S = (v) => String(v ?? '').trim();
+const lines = (v) => S(v).split('|').map(s => s.trim()).filter(Boolean); // "a | b | c" -> [a,b,c]
+function addMeta(cfg, r) {
+  if (S(r.theme)) cfg.theme = S(r.theme);
+  cfg.fonte = S(r.fonte);
+  cfg.dificuldade = S(r.dificuldade);
+  cfg.agenda = { dia: +r.dia || null, hora: r.hora === '' ? null : +r.hora };
+  cfg.yt = { titulo: S(r.yt_titulo), descricao: S(r.yt_descricao), tags: S(r.yt_tags) };
+  return cfg;
+}
+function buildQuizRow(r) {
+  const options = ['A', 'B', 'C', 'D']
+    .filter(L => S(r['option' + L]))
+    .map(L => ({ text: S(r['option' + L]), correct: S(r.correta).toUpperCase() === L }));
+  const cfg = {
+    formato: 'quiz',
+    tag: S(r.tag) || 'Quiz',
+    hook1: S(r.hook1) || 'VOCÊ SABIA?',
+    hookSub: S(r.hookSub),
+    question: S(r.question).split('|').map(s => s.trim()).join('\n'),
+    options,
+    reveal: S(r.reveal),
+    ctaTitle: S(r.ctaTitle) || 'Acertou? Comenta aí.',
+    handleSub: S(r.handleSub) || 'tech · produtividade · IA',
+  };
+  if (S(r.template)) cfg.template = S(r.template);
+  return addMeta(cfg, r);
+}
+function buildListaRow(r) {
+  const items = lines(r.items).map(chunk => {
+    const i = chunk.indexOf('::');
+    return i === -1 ? { badge: '', text: chunk } : { badge: chunk.slice(0, i).trim(), text: chunk.slice(i + 2).trim() };
+  });
+  const cfg = {
+    formato: 'lista',
+    tag: S(r.tag) || 'Lista',
+    hook1: S(r.hook1),
+    hook2: S(r.hook2),
+    hookSub: S(r.hookSub),
+    items,
+    ctaTitle: S(r.ctaTitle),
+    ctaSub: S(r.ctaSub),
+    handleSub: S(r.handleSub) || 'tech · produtividade · IA',
+  };
+  return addMeta(cfg, r);
+}
+function buildHistoriaRow(r) {
+  const sections = lines(r.sections).map(chunk => {
+    const [eyebrow = '', title = '', body = '', punch = ''] = chunk.split('::').map(x => x.trim());
+    const sec = { eyebrow };
+    if (title) sec.title = title.split('/').map(x => x.trim()).join('\n');
+    if (body) sec.body = body;
+    if (punch) sec.punch = punch;
+    return sec;
+  });
+  const cfg = {
+    formato: 'historia',
+    tag: S(r.tag) || 'Case',
+    hook: { line1: S(r.hook_line1), line2: S(r.hook_line2), punch: S(r.hook_punch) },
+    sections,
+    cta: { top: S(r.cta_top), title: S(r.cta_title).split('/').map(x => x.trim()).join('\n') },
+    handleSub: S(r.handleSub) || 'tech · produtividade · IA',
+  };
+  return addMeta(cfg, r);
+}
+const ROW_BUILDERS = { quiz: buildQuizRow, lista: buildListaRow, historia: buildHistoriaRow };
+function sheetFormato(name) {
+  const n = String(name).toLowerCase();
+  if (n.startsWith('quiz')) return 'quiz';
+  if (n.startsWith('lista')) return 'lista';
+  if (n.startsWith('histor')) return 'historia';
+  return null;
+}
 async function importPlanilha(bufOrPath) {
   const XLSX = (await import('xlsx')).default;
   const wb = Buffer.isBuffer(bufOrPath) ? XLSX.read(bufOrPath, { type: 'buffer' }) : XLSX.readFile(bufOrPath);
-  const sheet = wb.Sheets['quizzes'] || wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
   const result = { total: 0, ok: 0, bad: 0, slugs: [], warnsBySlug: {} };
-  for (const r of rows) {
-    const slug = String(r.slug || '').trim();
-    if (!slug || !SLUG_RE.test(slug)) continue;
-    const options = ['A', 'B', 'C']
-      .filter(L => String(r['option' + L]).trim())
-      .map(L => ({ text: String(r['option' + L]).trim(), correct: String(r.correta).trim().toUpperCase() === L }));
-    const cfg = {
-      formato: 'quiz',
-      tag: String(r.tag || 'Quiz').trim(),
-      hook1: String(r.hook1 || 'VOCÊ SABIA?').trim(),
-      hookSub: String(r.hookSub || '').trim(),
-      question: String(r.question).split('|').map(s => s.trim()).join('\n'),
-      options,
-      reveal: String(r.reveal || '').trim(),
-      ctaTitle: 'Acertou? Comenta aí.',
-      handleSub: 'tech · produtividade · IA',
-      fonte: String(r.fonte || '').trim(),
-      dificuldade: String(r.dificuldade || '').trim(),
-      agenda: { dia: +r.dia || null, hora: r.hora === '' ? null : +r.hora },
-      yt: { titulo: String(r.yt_titulo || '').trim(), descricao: String(r.yt_descricao || '').trim(), tags: String(r.yt_tags || '').trim() },
-    };
-    const warns = validate(slug, cfg);
-    result.total++;
-    if (warns.length) { result.bad++; result.warnsBySlug[slug] = warns; } else result.ok++;
-    fs.mkdirSync(projectDir(slug), { recursive: true });
-    fs.writeFileSync(projectJson(slug), JSON.stringify(cfg, null, 2) + '\n');
-    result.slugs.push(slug);
+  let sheets = wb.SheetNames.map(n => [n, sheetFormato(n)]).filter(([, f]) => f);
+  if (!sheets.length && wb.SheetNames.length) sheets = [[wb.SheetNames[0], 'quiz']]; // compat: 1 aba = quizzes
+  for (const [name, formato] of sheets) {
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: '' });
+    for (const r of rows) {
+      const slug = S(r.slug);
+      if (!slug || !SLUG_RE.test(slug)) continue;
+      const cfg = ROW_BUILDERS[formato](r);
+      const warns = validate(slug, cfg);
+      result.total++;
+      if (warns.length) { result.bad++; result.warnsBySlug[slug] = warns; } else result.ok++;
+      fs.mkdirSync(projectDir(slug), { recursive: true });
+      fs.writeFileSync(projectJson(slug), JSON.stringify(cfg, null, 2) + '\n');
+      result.slugs.push(slug);
+    }
   }
   return result;
 }
@@ -1174,7 +1242,7 @@ async function main() {
     }
     const { total, ok, bad, warnsBySlug } = await importPlanilha(file);
     for (const [slug, warns] of Object.entries(warnsBySlug)) { console.warn(`⚠ ${slug}:`); for (const w of warns) console.warn('    ' + w); }
-    console.log(`✓ importados ${total} quizzes (${ok} ok, ${bad} com avisos — revise antes de renderizar)`);
+    console.log(`✓ importados ${total} reels (${ok} ok, ${bad} com avisos — revise antes de renderizar)`);
   } else if (cmd === 'audio') {
     // Limpa a narração crua (narracao/raw/<slug>.*) e atualiza content/<slug>.json.
     // Uso: node cli.mjs audio <slug>
@@ -1211,21 +1279,28 @@ async function main() {
     const rows = [];
     for (const slug of listSlugs()) {
       const cfg = JSON.parse(fs.readFileSync(projectJson(slug), 'utf8'));
-      if (cfg.formato !== 'quiz' || !cfg.yt) continue;
+      if (!cfg.yt) continue; // qualquer formato curto com metadados de upload
+      const isQuiz = cfg.formato === 'quiz';
+      // resumo do conteúdo por formato (só pra referência ao publicar).
+      const conteudo = isQuiz ? String(cfg.question || '').replace(/\n/g, ' ')
+        : cfg.formato === 'lista' ? [cfg.hook1, cfg.hook2].filter(Boolean).join(' ')
+        : cfg.formato === 'historia' ? [cfg.hook?.line1, cfg.hook?.line2].filter(Boolean).join(' ')
+        : (cfg.titulo || '');
       rows.push({
         dia: cfg.agenda?.dia ?? '', hora: cfg.agenda?.hora ?? '',
+        formato: cfg.formato,
         arquivo: `projects\\${slug}\\render\\video.mp4`,
         mp4_pronto: fs.existsSync(path.join(renderDir(slug), 'video.mp4')) ? 'sim' : 'NÃO',
         titulo: cfg.yt.titulo, descricao: cfg.yt.descricao, tags: cfg.yt.tags,
-        pergunta: cfg.question.replace(/\n/g, ' '),
-        resposta: (cfg.options.find(o => o.correct) || {}).text || '',
+        conteudo,
+        resposta: isQuiz ? (cfg.options.find(o => o.correct) || {}).text || '' : '',
         fonte: cfg.fonte || '',
         publicado: '',
       });
     }
     rows.sort((a, b) => (a.dia - b.dia) || (a.hora - b.hora));
     const ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = [{ wch: 4 }, { wch: 5 }, { wch: 34 }, { wch: 10 }, { wch: 70 }, { wch: 90 }, { wch: 60 }, { wch: 50 }, { wch: 16 }, { wch: 40 }, { wch: 10 }];
+    ws['!cols'] = [{ wch: 4 }, { wch: 5 }, { wch: 9 }, { wch: 34 }, { wch: 10 }, { wch: 70 }, { wch: 90 }, { wch: 60 }, { wch: 50 }, { wch: 16 }, { wch: 40 }, { wch: 10 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'publicacao');
     fs.mkdirSync(path.join(ROOT, 'out'), { recursive: true });

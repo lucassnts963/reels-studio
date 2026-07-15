@@ -113,7 +113,7 @@ node cli.mjs render <slug> --sem-musica # sem trilha de fundo
 node cli.mjs audio <slug>               # limpa a narração crua e mede a duração real
 node cli.mjs export <slug>              # empacota o projeto num <slug>.rvs (zip portátil)
 node cli.mjs import <arquivo.rvs>       # importa um .rvs de volta para projects/
-node cli.mjs import <planilha.xlsx>     # aba "quizzes" -> vários projetos
+node cli.mjs import <planilha.xlsx>     # abas quizzes/listas/historias -> vários projetos (precisa da lib xlsx)
 node cli.mjs export-theme <id>          # empacota um tema em <id>.rvtheme
 node cli.mjs export-template <id>       # empacota um template de cena em <id>.rvtemplate
 node cli.mjs import <arquivo.rvtheme|.rvtemplate> [--id <novo>]   # importa tema/template
