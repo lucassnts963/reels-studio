@@ -126,6 +126,8 @@ const TOOLS = [
   { name: 'import_spreadsheet', description: 'Importa uma planilha .xlsx (abas quizzes/listas/historias) criando vários projetos.', inputSchema: { type: 'object', properties: { path: { type: 'string', description: 'caminho do .xlsx (absoluto ou relativo à raiz)' } }, required: ['path'] } },
   { name: 'import_package', description: 'Importa um pacote .rvs / .rvtheme / .rvtemplate.', inputSchema: { type: 'object', properties: { path: { type: 'string' }, id: { type: 'string', description: 'novo id (opcional, p/ tema/template)' } }, required: ['path'] } },
   { name: 'clean_audio', description: 'Limpa a narração crua e mede a duração (node cli.mjs audio).', inputSchema: S() },
+  { name: 'tts_generate', description: 'Gera narração por TTS (ElevenLabs/OpenAI; chave em env). Sem sceneId, narra o projeto todo; com sceneId, narra a cena. Sem text, usa o roteiro da cena ou a question do quiz.', inputSchema: { type: 'object', properties: { slug: { type: 'string' }, sceneId: { type: 'string' }, text: { type: 'string' }, provider: { type: 'string', enum: ['elevenlabs', 'openai'] }, voice: { type: 'string' }, model: { type: 'string' } }, required: ['slug'] } },
+  { name: 'list_voices', description: 'Lista as vozes de um provedor de TTS (elevenlabs precisa da env ELEVENLABS_API_KEY; openai é fixo).', inputSchema: { type: 'object', properties: { provider: { type: 'string', enum: ['elevenlabs', 'openai'] } } } },
   { name: 'export_project', description: 'Empacota o projeto num .rvs.', inputSchema: S() },
   { name: 'export_theme', description: 'Empacota um tema num .rvtheme.', inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] } },
   { name: 'export_template', description: 'Empacota um template de cena num .rvtemplate.', inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] } },
@@ -193,6 +195,16 @@ async function handleCall(name, a = {}) {
     case 'import_spreadsheet': return text(asText(await runCli(['import', a.path])));
     case 'import_package': return text(asText(await runCli(['import', a.path, ...(a.id ? ['--id', a.id] : [])])));
     case 'clean_audio': return text(asText(await runCli(['audio', a.slug], { timeout: 300000 })));
+    case 'tts_generate': {
+      const args = ['tts', a.slug];
+      if (a.sceneId) args.push('--scene', a.sceneId);
+      if (a.text) args.push('--text', a.text);
+      if (a.provider) args.push('--provider', a.provider);
+      if (a.voice) args.push('--voice', a.voice);
+      if (a.model) args.push('--model', a.model);
+      return text(asText(await runCli(args, { timeout: 120000 })));
+    }
+    case 'list_voices': return text(asText(await runCli(['voices', ...(a.provider ? ['--provider', a.provider] : [])])));
     case 'export_project': return text(asText(await runCli(['export', a.slug])));
     case 'export_theme': return text(asText(await runCli(['export-theme', a.id])));
     case 'export_template': return text(asText(await runCli(['export-template', a.id])));

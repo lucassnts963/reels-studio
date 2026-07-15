@@ -227,6 +227,8 @@ e o schema de cada formato, incluindo os layouts de cena do `tutorial`.
   quiz por canal — tudo com YAML, sem código.
 - **[docs/plugin.md](docs/plugin.md)** — plugin do Claude Cowork (MCP + skills + comandos):
   operar tudo (criar/renderizar/importar/render em lote) de dentro do Cowork.
+- **[docs/voz-tts.md](docs/voz-tts.md)** — narração: voz gravada + TTS (ElevenLabs/OpenAI,
+  chaves via env).
 - **[docs/saas.md](docs/saas.md)** — roadmap futuro (camada AI/SaaS).
 
 ## Temas e canais
