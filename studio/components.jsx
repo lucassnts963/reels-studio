@@ -1231,7 +1231,51 @@ function ListaEditor({ cfg, patch }) {
   );
 }
 
-function QuizEditor({ cfg, patch }) {
+// Narração da pergunta (quiz): grava a voz OU gera por TTS. Grava cfg.narracao
+// (o render muxa e a cena da pergunta passa a durar o tempo da fala). Só online.
+function NarracaoQuiz({ slug, cfg, online, patch }) {
+  const [busy, setBusy] = React.useState('');
+  const [err, setErr] = React.useState('');
+  const rec = useTakeRecorder({
+    onUse: async (blob) => {
+      setErr(''); setBusy('enviando…');
+      try {
+        await fetch(`/api/assets/${encodeURIComponent(slug)}/narracao/${encodeURIComponent(slug)}.webm`, { method: 'PUT', body: blob });
+        const n = await api(`/api/audio/${encodeURIComponent(slug)}`, { method: 'POST' });
+        patch({ narracao: { raw: n.raw, limpo: n.limpo, duracaoSegundos: n.duracaoSegundos } });
+      } catch (e) { setErr(String(e.message || e)); } finally { setBusy(''); }
+    },
+  });
+  const gerarTTS = async () => {
+    const text = (cfg.question || '').replace(/\n/g, ' ').trim();
+    if (!text) { setErr('escreva a pergunta primeiro'); return; }
+    setErr(''); setBusy('gerando (TTS)…');
+    try {
+      const n = await api(`/api/tts/${encodeURIComponent(slug)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text }) });
+      patch({ narracao: { raw: n.raw, limpo: n.limpo, duracaoSegundos: n.duracaoSegundos } });
+    } catch (e) { setErr(String(e.message || e)); } finally { setBusy(''); }
+  };
+  const dur = cfg.narracao?.duracaoSegundos;
+  if (!online) return <div className="hint">narração exige o PC conectado.</div>;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {dur > 0 && <div className="hint">✓ narração: {fmtSecs(dur)} — a pergunta fica no ar esse tempo. <button className="btn xs" onClick={() => patch({ narracao: undefined })}>remover</button></div>}
+      <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
+        {rec.state === 'recording'
+          ? <button className="btn sm danger" onClick={rec.stop}>parar ({rec.secs}s)</button>
+          : <button className="btn sm" onClick={rec.start} disabled={!!busy}><Ic.mic /> gravar voz</button>}
+        {rec.state === 'review' && <><button className="btn sm primary" onClick={rec.use}>usar</button><button className="btn sm" onClick={rec.discard}>descartar</button></>}
+        <button className="btn sm" onClick={gerarTTS} disabled={!!busy || rec.state === 'recording'}>gerar por TTS</button>
+      </div>
+      {rec.reviewUrl && rec.state === 'review' && <audio src={rec.reviewUrl} controls style={{ width: '100%' }} />}
+      {busy && <div className="hint">{busy}</div>}
+      {(err || rec.err) && <div className="warn-chip" title={err || rec.err}>✗ {(err || rec.err).slice(0, 80)}</div>}
+      <div className="hint">TTS usa a pergunta como texto. Provedor/voz por env (ver docs/voz-tts.md).</div>
+    </div>
+  );
+}
+
+function QuizEditor({ cfg, patch, slug, online }) {
   const options = cfg.options || [];
   const setCorrect = (idx) => patch({ options: options.map((o, i) => ({ ...o, correct: i === idx })) });
   return (
@@ -1243,6 +1287,9 @@ function QuizEditor({ cfg, patch }) {
       </Group>
       <Group title="pergunta">
         <AreaField label="pergunta (uma frase por linha, ate 24/linha)" value={cfg.question} onChange={(v) => patch({ question: v })} rows={3} />
+      </Group>
+      <Group title="narração da pergunta (opcional)">
+        <NarracaoQuiz slug={slug} cfg={cfg} online={online} patch={patch} />
       </Group>
       <Group title="opcoes (2 a 4, marque a correta)">
         <ListEditor label="opcoes" items={options} min={2} max={4}
@@ -1349,7 +1396,7 @@ function ReelEditor({ slug, cfg, nonce, online, patch, narrow, onOpenPreview }) 
         )}
       </Group>
       {Editor
-        ? <Editor cfg={cfg} patch={patch} />
+        ? <Editor cfg={cfg} patch={patch} slug={slug} online={online} />
         : <div className="hint">formato "{cfg.formato}" nao tem editor visual - use o JSON.</div>}
     </React.Fragment>
   );

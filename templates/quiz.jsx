@@ -16,7 +16,10 @@ const C = Object.assign({
 const OPTS = C.options.slice(0, 4);
 const N_OPTS = OPTS.length;
 // Linha do tempo (adapta ao nº de opções mantendo o ritmo do original de 3):
-const T_OPTS = 3.0;
+// com narração da pergunta, as opções esperam a fala (a pergunta é narrada de ~2.5s
+// até 2.5+fala); sem narração, ritmo fixo original (3.0s).
+const _NARR = +(C.narracao?.duracaoSegundos) || 0;
+const T_OPTS = _NARR > 0 ? 2.5 + _NARR + 0.5 : 3.0;
 const T_COUNT = T_OPTS + 1.0 + N_OPTS * 0.4 + 3.2;   // fim das opções + tempo de leitura
 const T_REVEAL = T_COUNT + 2.8;                        // contagem 3-2-1 (0.9s cada)
 const T_CAPTION = T_REVEAL + 0.2;

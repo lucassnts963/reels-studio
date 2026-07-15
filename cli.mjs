@@ -702,15 +702,18 @@ async function renderOne(slug, { fps = 30, port, onProgress, secure = false }) {
       const limpo = await buildSceneNarration(slug, cfg, ffmpegPath);
       cfg.narracao = { ...(cfg.narracao || {}), limpo };
     }
-    const temNarracao = cfg.formato === 'tutorial' && cfg.narracao?.limpo;
+    // narração muxada: tutorial (delay = intro) e quiz (delay = quando a pergunta
+    // aparece, ~2.5s, batendo com o início da fase "question" do quiz-renderer).
+    const QUIZ_NARR_START = 2.5;
+    const temNarracao = (cfg.formato === 'tutorial' || cfg.formato === 'quiz') && cfg.narracao?.limpo;
     if (temNarracao) {
-      const introDur = cfg.intro?.duracao ?? 2.4;
+      const narrDelaySec = cfg.formato === 'quiz' ? QUIZ_NARR_START : (cfg.intro?.duracao ?? 2.4);
       const narracaoFile = projPath(slug, cfg.narracao.limpo);
       if (!fs.existsSync(narracaoFile)) {
         console.warn(`  ⚠ ${cfg.narracao.limpo} não encontrado — rode "node cli.mjs audio ${slug}" antes de renderizar`);
       } else {
         const tmp = outFile.replace(/\.mp4$/, '.tmp.mp4');
-        const introMs = Math.round(introDur * 1000);
+        const introMs = Math.round(narrDelaySec * 1000);
         // sem -shortest: o vídeo (com intro+corpo+outro) manda na duração final;
         // a narração termina antes do outro e o restante fica em silêncio.
         await run(ffmpegPath, [

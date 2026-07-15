@@ -5,7 +5,7 @@
 // lugar). API, player, content e assets NUNCA passam pelo cache — sempre rede
 // (o offline deles é tratado pelo IndexedDB do app).
 
-const CACHE = 'reels-studio-studio-v15';
+const CACHE = 'reels-studio-studio-v16';
 const SHELL = [
   '/studio/',
   '/studio/index.html',
