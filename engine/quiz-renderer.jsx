@@ -26,7 +26,10 @@ const OPT_Y = 865;
 // Espelha os T_* do quiz.jsx para manter o ritmo (e a paridade do template classico).
 function computeQuiz(cfg, tl, optionsTop = OPT_Y) {
   const nOpts = Math.min(4, (cfg.options || []).length);
-  const T_OPTS = tl.options;                                   // início das opções
+  // Com narração da pergunta, as opções esperam a fala acabar (a pergunta fica no
+  // ar pela duração da narração); sem narração, mantém o ritmo fixo original.
+  const narr = +(cfg.narracao?.duracaoSegundos) || 0;
+  const T_OPTS = narr > 0 ? tl.question + narr + 0.5 : tl.options; // início das opções
   const T_COUNT = T_OPTS + tl.read + nOpts * tl.optStagger + 3.2; // fim opções + leitura
   const T_REVEAL = T_COUNT + tl.countdown;                     // após a contagem 3-2-1
   const T_CAPTION = T_REVEAL + 0.2;
