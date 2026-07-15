@@ -161,8 +161,10 @@ function listSlugs() {
     .sort();
 }
 
-// slug simples (sem barras/traversal) usado nas rotas /api/*.
-const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/i;
+// slug simples (sem barras/traversal) usado nas rotas /api/*. Aceita letras
+// Unicode (há projetos com acento no nome, ex.: quiz-história-tech-614) — só
+// letras/dígitos/hífen, então nada de barra, ponto ou espaço (seguro p/ path).
+const SLUG_RE = /^[\p{L}0-9][\p{L}0-9-]*$/u;
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -229,11 +231,22 @@ async function handleApi(req, res, url) {
     return sendJson(res, 200, listQuizTemplates());
   }
 
-  // lista todos os projetos com seu formato (o Studio filtra/busca na UI).
+  // lista todos os projetos com formato + status de render (o Studio filtra na UI).
+  // rendered = existe render/video.mp4; stale = project.json mudou depois do mp4
+  // (precisa re-renderizar). Usado pela tela de render em lote.
   if (url.pathname === '/api/projects') {
     const items = listSlugs().map((slug) => {
-      try { return { slug, formato: JSON.parse(fs.readFileSync(projectJson(slug), 'utf8')).formato || '?' }; }
-      catch { return { slug, formato: '?' }; }
+      let formato = '?', rendered = false, stale = false;
+      try {
+        const jf = projectJson(slug);
+        formato = JSON.parse(fs.readFileSync(jf, 'utf8')).formato || '?';
+        const mp4 = path.join(renderDir(slug), 'video.mp4');
+        if (fs.existsSync(mp4)) {
+          rendered = true;
+          try { stale = fs.statSync(jf).mtimeMs > fs.statSync(mp4).mtimeMs; } catch {}
+        }
+      } catch {}
+      return { slug, formato, rendered, stale };
     });
     return sendJson(res, 200, items);
   }
@@ -258,8 +271,8 @@ async function handleApi(req, res, url) {
     return skeleton ? sendJson(res, 200, skeleton) : sendJson(res, 404, { error: 'formato desconhecido' });
   }
 
-  if ((r = m(/^\/api\/tutorial\/([a-z0-9-]+)$/i))) {
-    const slug = r[1];
+  if ((r = m(/^\/api\/tutorial\/([^/]+)$/i))) {
+    const slug = decodeURIComponent(r[1]);
     if (!SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });
     const file = projectJson(slug);
     if (req.method === 'GET') {
@@ -277,14 +290,14 @@ async function handleApi(req, res, url) {
     }
   }
 
-  if ((r = m(/^\/api\/assets\/([a-z0-9-]+)$/i)) && req.method === 'GET') {
-    const slug = r[1];
+  if ((r = m(/^\/api\/assets\/([^/]+)$/i)) && req.method === 'GET') {
+    const slug = decodeURIComponent(r[1]);
     if (!SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });
     return sendJson(res, 200, listAssets(slug));
   }
 
-  if ((r = m(/^\/api\/assets\/([a-z0-9-]+)\/(gravacao|print|narracao|audioCena)\/([^/]+)$/i)) && req.method === 'PUT') {
-    const [, slug, kind, filenameRaw] = r;
+  if ((r = m(/^\/api\/assets\/([^/]+)\/(gravacao|print|narracao|audioCena)\/([^/]+)$/i)) && req.method === 'PUT') {
+    const slug = decodeURIComponent(r[1]), kind = r[2], filenameRaw = r[3];
     if (!SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });
     const filename = path.basename(decodeURIComponent(filenameRaw));
     const spec = ASSET_KINDS[kind];
@@ -298,8 +311,8 @@ async function handleApi(req, res, url) {
     return sendJson(res, 200, { ok: true, path: relAsset(kind, finalName) });
   }
 
-  if ((r = m(/^\/api\/audio\/([a-z0-9-]+)$/i)) && req.method === 'POST') {
-    const slug = r[1];
+  if ((r = m(/^\/api\/audio\/([^/]+)$/i)) && req.method === 'POST') {
+    const slug = decodeURIComponent(r[1]);
     if (!SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });
     try {
       const narracao = await cleanNarration(slug);
@@ -364,8 +377,8 @@ async function handleApi(req, res, url) {
   }
 
   // limpa o take de UMA cena (gravado pelo Studio) e devolve {src, duracaoSegundos}.
-  if ((r = m(/^\/api\/audio-cena\/([a-z0-9-]+)\/([a-z0-9-]+)$/i)) && req.method === 'POST') {
-    const [, slug, sceneId] = r;
+  if ((r = m(/^\/api\/audio-cena\/([^/]+)\/([a-z0-9-]+)$/i)) && req.method === 'POST') {
+    const slug = decodeURIComponent(r[1]), sceneId = r[2];
     if (!SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });
     try {
       const audio = await cleanSceneAudio(slug, sceneId, { trim: url.searchParams.get('trim') !== '0' });
@@ -375,12 +388,12 @@ async function handleApi(req, res, url) {
     }
   }
 
-  if ((r = m(/^\/api\/render\/([a-z0-9-]+)\/status$/i)) && req.method === 'GET') {
-    return sendJson(res, 200, renderStatus.get(r[1]) || { state: 'idle' });
+  if ((r = m(/^\/api\/render\/([^/]+)\/status$/i)) && req.method === 'GET') {
+    return sendJson(res, 200, renderStatus.get(decodeURIComponent(r[1])) || { state: 'idle' });
   }
 
-  if ((r = m(/^\/api\/render\/([a-z0-9-]+)$/i)) && req.method === 'POST') {
-    const slug = r[1];
+  if ((r = m(/^\/api\/render\/([^/]+)$/i)) && req.method === 'POST') {
+    const slug = decodeURIComponent(r[1]);
     if (!SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });
     const current = renderStatus.get(slug);
     if (current && current.state === 'running') return sendJson(res, 409, { error: 'já renderizando' });
@@ -388,6 +401,7 @@ async function handleApi(req, res, url) {
     const port = req.socket.localPort;
     renderOne(slug, {
       port,
+      secure: !!req.socket.encrypted, // o serve do Studio pode ser HTTPS (mkcert)
       onProgress: ({ frame, total }) => renderStatus.set(slug, { state: 'running', frame, total }),
     })
       .then(() => renderStatus.set(slug, { state: 'done', frame: 1, total: 1 }))
@@ -573,7 +587,7 @@ const CHROME_PATHS = [
   process.env.LOCALAPPDATA + '\\Google\\Chrome\\Application\\chrome.exe',
 ];
 
-async function renderOne(slug, { fps = 30, port, onProgress }) {
+async function renderOne(slug, { fps = 30, port, onProgress, secure = false }) {
   const cfg = loadCfg(slug);
   const warns = validate(slug, cfg);
   for (const w of warns) console.warn('  ⚠ ' + w);
@@ -587,6 +601,7 @@ async function renderOne(slug, { fps = 30, port, onProgress }) {
   const browser = await puppeteer.launch({
     executablePath: chrome,
     headless: true,
+    acceptInsecureCerts: true, // servidor pode ser HTTPS com cert self-signed (mkcert)
     args: ['--force-device-scale-factor=1', '--hide-scrollbars', '--mute-audio'],
   });
   try {
@@ -595,7 +610,7 @@ async function renderOne(slug, { fps = 30, port, onProgress }) {
     // +44 da barra de playback do player ⇒ Stage fica em escala 1:1 (captura nítida).
     const landscape = cfg.formato === 'tutorial';
     await page.setViewport(landscape ? { width: 1920, height: 1124, deviceScaleFactor: 1 } : { width: 1080, height: 1964, deviceScaleFactor: 1 });
-    await page.goto(`http://127.0.0.1:${port}/player/player.html?reel=${encodeURIComponent(slug)}`, { waitUntil: 'networkidle0' });
+    await page.goto(`${secure ? 'https' : 'http'}://127.0.0.1:${port}/player/player.html?reel=${encodeURIComponent(slug)}`, { waitUntil: 'networkidle0' });
     await page.waitForFunction('window.__REEL_READY === true || window.__REEL_ERROR', { timeout: 30000 });
     const err = await page.evaluate('window.__REEL_ERROR');
     if (err) throw new Error('Player falhou:\n' + err);
