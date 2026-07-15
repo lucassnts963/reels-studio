@@ -1,0 +1,14 @@
+{
+  "name": "reels-studio",
+  "displayName": "Reels Studio",
+  "version": "1.0.0",
+  "description": "Opera o reels-studio de dentro do Claude Cowork: cria/valida/renderiza projetos (render em lote não-bloqueante), importa Excel/pacotes, limpa áudio, exporta, lista temas/templates — via MCP + skills + comandos.",
+  "author": { "name": "Lucas Santos", "email": "lucassnts963@gmail.com" },
+  "mcpServers": {
+    "reels-studio": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/server.mjs"]
+    }
+  }
+}
