@@ -119,6 +119,7 @@ const TOOLS = [
   { name: 'write_project', description: 'Grava o project.json (cria a pasta) e valida; devolve os avisos.', inputSchema: { type: 'object', properties: { slug: { type: 'string' }, cfg: { type: 'object', description: 'objeto de conteúdo do vídeo' } }, required: ['slug', 'cfg'] } },
   { name: 'create_project', description: 'Cria um projeto vazio de um formato (node cli.mjs new).', inputSchema: { type: 'object', properties: { slug: { type: 'string' }, formato: { type: 'string', enum: ['tutorial', 'quiz', 'lista', 'historia'] } }, required: ['slug', 'formato'] } },
   { name: 'validate', description: 'Valida um projeto (limites de texto, campos).', inputSchema: S() },
+  { name: 'delete_project', description: 'EXCLUI um projeto inteiro (projects/<slug>/ — project.json, assets e render). Não dá pra desfazer.', inputSchema: S() },
   { name: 'render_start', description: 'Dispara o render de um projeto (não bloqueia). Use render_status para acompanhar.', inputSchema: S() },
   { name: 'render_status', description: 'Status dos renders (um slug, ou todos os jobs se omitido).', inputSchema: { type: 'object', properties: { slug: { type: 'string' } } } },
   { name: 'render_batch', description: 'Enfileira renders sequenciais. Passe slugs, ou um filtro: formato e/ou status pendente/desatualizado/todos.', inputSchema: { type: 'object', properties: { slugs: { type: 'array', items: { type: 'string' } }, formato: { type: 'string' }, status: { type: 'string', enum: ['pendente', 'desatualizado', 'pendentes+desatualizados', 'todos'], default: 'pendentes+desatualizados' } } } },
@@ -169,6 +170,7 @@ async function handleCall(name, a = {}) {
     }
     case 'create_project': return text(asText(await runCli(['new', a.slug, '--formato', a.formato])));
     case 'validate': return text(asText(await runCli(['validate', a.slug])));
+    case 'delete_project': return text(asText(await runCli(['delete', a.slug])));
     case 'render_start': return text(startRender(a.slug));
     case 'render_status':
       return text(a.slug ? jobView(a.slug) : { fila: queue.slice(), jobs: [...jobs.keys()].map(jobView) });
