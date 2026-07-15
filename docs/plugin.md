@@ -14,8 +14,13 @@ e alcança o repositório real pela env **`REELS_ROOT`**. É lá (no repo) que e
 - Este repo com `pnpm install` já rodado (para o `cli.mjs`: puppeteer-core, xlsx, js-yaml).
 - Node 18+ e Google Chrome instalados (o render usa Chrome headless).
 - `tools/ffmpeg.exe` presente (já vem no repo).
-- No `cowork-plugin/.claude-plugin/plugin.json`, a env `REELS_ROOT` aponta para a **raiz
-  deste repo** (padrão `C:\dev\reels-studio`). Ajuste se o repo estiver em outro caminho.
+- No `cowork-plugin/.claude-plugin/plugin.json` há **dois caminhos absolutos** que precisam
+  bater com esta máquina (o app do Cowork **não herda o PATH do terminal**):
+  - `mcpServers.reels-studio.command` = caminho do `node.exe`
+    (padrão `C:\Program Files\nodejs\node.exe` — confira com `where node`).
+  - `env.REELS_ROOT` = raiz deste repo (padrão `C:\dev\reels-studio`).
+  Por isso o `command` é o caminho completo do node, e não só `"node"`: no Claude Code o
+  `node` do PATH resolve, mas no Cowork (app Electron) o PATH costuma não ter o node.
 
 ## Instalar
 

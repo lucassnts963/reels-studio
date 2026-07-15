@@ -7,7 +7,7 @@
   "mcpServers": {
     "reels-studio": {
       "type": "stdio",
-      "command": "node",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
       "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/server.mjs"],
       "env": {
         "REELS_ROOT": "C:\\dev\\reels-studio"
