@@ -291,6 +291,17 @@ async function handleApi(req, res, url) {
     }
   }
 
+  // exclui um projeto inteiro (projects/<slug>/). Usado pelo botão do Studio.
+  if ((r = m(/^\/api\/project\/([^/]+)$/i)) && req.method === 'DELETE') {
+    const slug = decodeURIComponent(r[1]);
+    if (!SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });
+    const dir = projectDir(slug);
+    if (path.relative(PROJECTS, dir).startsWith('..')) return sendJson(res, 400, { error: 'caminho inválido' });
+    if (!fs.existsSync(dir)) return sendJson(res, 404, { error: 'não encontrado' });
+    fs.rmSync(dir, { recursive: true, force: true });
+    return sendJson(res, 200, { ok: true });
+  }
+
   if ((r = m(/^\/api\/assets\/([^/]+)$/i)) && req.method === 'GET') {
     const slug = decodeURIComponent(r[1]);
     if (!SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });

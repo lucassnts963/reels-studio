@@ -865,10 +865,18 @@ function ProjectHome({ online, onOpen, onNew }) {
   const [filtro, setFiltro] = React.useState('todos');
   const [busca, setBusca] = React.useState('');
   const [novoOpen, setNovoOpen] = React.useState(false);
+  const [del, setDel] = React.useState(null);   // slug pendente de confirmação de exclusão
+  const [delBusy, setDelBusy] = React.useState(false);
   const refresh = React.useCallback(() => {
     Store.listAll().then((r) => setItems(r.items)).catch(() => setItems([]));
   }, []);
   React.useEffect(() => { refresh(); }, [refresh, online]);
+  const doDelete = async () => {
+    setDelBusy(true);
+    try { await Store.deleteProject(del, online); setDel(null); refresh(); }
+    catch (e) { alert(String(e.message || e)); }
+    finally { setDelBusy(false); }
+  };
 
   const BADGE = {
     sincronizado: ['synced', 'sincronizado'],
@@ -913,12 +921,26 @@ function ProjectHome({ online, onOpen, onNew }) {
               <span className="home-slug">{it.slug}</span>
               <div className="grow" />
               <span className={'badge ' + cls}>{label}</span>
+              <button className="icon-btn danger" title="excluir projeto" onClick={(e) => { e.stopPropagation(); setDel(it.slug); }}><Ic.trash /></button>
             </li>
           );
         })}
       </ul>
       {filtered.length > 200 && <div className="hint">mostrando 200 de {filtered.length} — refine a busca.</div>}
       {online === false && <div className="hint" style={{ marginTop: 10 }}>○ offline — mostrando só o que está neste aparelho.</div>}
+
+      {del && (
+        <div className="modal-scrim" onClick={() => !delBusy && setDel(null)}>
+          <div className="modal" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()}>
+            <h3>Excluir projeto</h3>
+            <div className="sub">Isso apaga <b>{del}</b> — o <code>project.json</code>, os assets e o render (no PC e neste aparelho). <b>Não dá pra desfazer.</b></div>
+            <div className="row" style={{ justifyContent: 'flex-end', marginTop: 14 }}>
+              <button className="btn" onClick={() => setDel(null)} disabled={delBusy}>cancelar</button>
+              <button className="btn danger" onClick={doDelete} disabled={delBusy}>{delBusy ? 'excluindo…' : 'excluir'}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {novoOpen && (
         <div className="modal-scrim" onClick={() => setNovoOpen(false)}>
