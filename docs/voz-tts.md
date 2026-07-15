@@ -38,6 +38,18 @@ node cli.mjs voices --provider elevenlabs
 Config por projeto (opcional) no `project.json`: `"voz": { "provider": "elevenlabs",
 "voice": "<id>", "model": "..." }` — sobrescreve os defaults de env.
 
+### Clipe de CTA reutilizável (economia de créditos)
+
+Um clipe de voz **compartilhado** entre projetos — gera **uma vez** e todos reusam, sem
+gastar créditos por vídeo. Fica em `voz/<name>.m4a` (pasta `voz/`, gitignorada).
+
+```bash
+node cli.mjs tts-shared cta --text "Acertou? Comenta aí."   # -> voz/cta.m4a
+```
+
+Se existir `voz/cta.m4a`, o render de **todo quiz** mistura esse clipe na fase do CTA (fim
+do vídeo), junto da narração da pergunta (se houver). MCP: `tts_shared { name, text }`.
+
 Rotas do Studio: `POST /api/tts/:slug` e `POST /api/tts-cena/:slug/:sceneId`
 (body `{ text?, provider?, voice?, model? }`), `GET /api/voices?provider=`.
 

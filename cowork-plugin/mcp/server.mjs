@@ -129,6 +129,7 @@ const TOOLS = [
   { name: 'clean_audio', description: 'Limpa a narração crua e mede a duração (node cli.mjs audio).', inputSchema: S() },
   { name: 'tts_generate', description: 'Gera narração por TTS (ElevenLabs/OpenAI; chave em env). Sem sceneId, narra o projeto todo; com sceneId, narra a cena. Sem text, usa o roteiro da cena ou a question do quiz.', inputSchema: { type: 'object', properties: { slug: { type: 'string' }, sceneId: { type: 'string' }, text: { type: 'string' }, provider: { type: 'string', enum: ['elevenlabs', 'openai'] }, voice: { type: 'string' }, model: { type: 'string' } }, required: ['slug'] } },
   { name: 'list_voices', description: 'Lista as vozes de um provedor de TTS (elevenlabs precisa da env ELEVENLABS_API_KEY; openai é fixo).', inputSchema: { type: 'object', properties: { provider: { type: 'string', enum: ['elevenlabs', 'openai'] } } } },
+  { name: 'tts_shared', description: 'Gera um clipe de voz COMPARTILHADO (voz/<name>.m4a) reutilizado entre projetos sem gastar créditos por vídeo. Ex.: name="cta", text="Acertou? Comenta aí." O render de quiz reusa voz/cta.m4a no fim.', inputSchema: { type: 'object', properties: { name: { type: 'string' }, text: { type: 'string' }, provider: { type: 'string' }, voice: { type: 'string' } }, required: ['name', 'text'] } },
   { name: 'export_project', description: 'Empacota o projeto num .rvs.', inputSchema: S() },
   { name: 'export_theme', description: 'Empacota um tema num .rvtheme.', inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] } },
   { name: 'export_template', description: 'Empacota um template de cena num .rvtemplate.', inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] } },
@@ -207,6 +208,12 @@ async function handleCall(name, a = {}) {
       return text(asText(await runCli(args, { timeout: 120000 })));
     }
     case 'list_voices': return text(asText(await runCli(['voices', ...(a.provider ? ['--provider', a.provider] : [])])));
+    case 'tts_shared': {
+      const args = ['tts-shared', a.name, '--text', a.text || ''];
+      if (a.provider) args.push('--provider', a.provider);
+      if (a.voice) args.push('--voice', a.voice);
+      return text(asText(await runCli(args, { timeout: 120000 })));
+    }
     case 'export_project': return text(asText(await runCli(['export', a.slug])));
     case 'export_theme': return text(asText(await runCli(['export-theme', a.id])));
     case 'export_template': return text(asText(await runCli(['export-template', a.id])));

@@ -27,3 +27,6 @@ out-com-musica/
 
 # artefato de build do plugin (gerar com Compress-Archive)
 cowork-plugin.zip
+
+# clipes de voz compartilhados (gerados por TTS)
+voz/
