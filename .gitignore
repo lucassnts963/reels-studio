@@ -24,3 +24,6 @@ prints/
 narracao/
 out/
 out-com-musica/
+
+# artefato de build do plugin (gerar com Compress-Archive)
+cowork-plugin.zip

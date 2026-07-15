@@ -17,23 +17,39 @@ e alcança o repositório real pela env **`REELS_ROOT`**. É lá (no repo) que e
 - No `cowork-plugin/.claude-plugin/plugin.json`, a env `REELS_ROOT` aponta para a **raiz
   deste repo** (padrão `C:\dev\reels-studio`). Ajuste se o repo estiver em outro caminho.
 
-## Instalar (Claude Cowork desktop) — via marketplace (recomendado)
+## Instalar
 
-O repo traz um marketplace em `.claude-plugin/marketplace.json` que lista o plugin
-`cowork-plugin/`. Em **Configurações → Plugins → Adicionar → Adicionar marketplace**,
-aponte para a **raiz do repo** (`C:\dev\reels-studio`). Depois instale o plugin
-**reels-studio** que aparece nesse marketplace. Assim o Cowork acompanha atualizações.
+O Cowork **copia** o plugin para um cache ao instalar (`~/.claude/plugins/cache`), por isso
+o plugin é a pasta pequena e autocontida `cowork-plugin/` e o MCP é sem dependências. Duas
+formas (docs oficiais: [use plugins](https://support.claude.com/en/articles/13837440),
+[marketplaces](https://code.claude.com/docs/en/plugin-marketplaces)):
 
-Alternativa — **Adicionar → Fazer upload de plugin**: selecione a pasta
-**`cowork-plugin/`** (só ela; é pequena e autocontida). Funciona porque o MCP é sem
-dependências e usa `REELS_ROOT` para achar o repo.
+**A) Upload de um .zip (mais rápido, não depende de GitHub).** O Cowork aceita um `.zip`
+válido de até 50 MB. Gere o zip da pasta do plugin:
 
-No **Claude Code** (CLI): `/plugin marketplace add C:\dev\reels-studio` e depois
-`/plugin install reels-studio@reels-studio`.
+```powershell
+Compress-Archive -Path C:\dev\reels-studio\cowork-plugin\* -DestinationPath C:\dev\reels-studio\cowork-plugin.zip -Force
+```
 
-Ao habilitar, o Cowork sobe o servidor MCP (`node ${CLAUDE_PLUGIN_ROOT}/mcp/server.mjs`,
-com `REELS_ROOT` no ambiente) e as ferramentas `reels-studio` ficam disponíveis, junto da
-skill e dos comandos.
+No app: **Plugins → Adicionar → Fazer upload de plugin** → selecione `cowork-plugin.zip`
+(o `.claude-plugin/plugin.json` fica na raiz do zip). O Cowork cria/usa um marketplace e
+instala o plugin.
+
+**B) Marketplace por repositório git.** O repo já traz `.claude-plugin/marketplace.json`
+(source `./cowork-plugin`). Em **Plugins → Adicionar → Adicionar marketplace →
+"Adicionar de um repositório"**, informe a URL do git
+(`https://github.com/lucassnts963/reels-studio.git`) e instale o plugin **reels-studio**.
+⚠ Os arquivos precisam estar no **branch que o Cowork busca** (o default do repo — hoje
+`main`); relative paths (`./cowork-plugin`) só resolvem quando o marketplace vem de um
+repositório git ou pasta local (não de uma URL direta pro `marketplace.json`).
+
+No **Claude Code** (CLI): `/plugin marketplace add C:\dev\reels-studio` (caminho local) e
+depois `/plugin install reels-studio@reels-studio`.
+
+Depois de instalar, confira que a env **`REELS_ROOT`** no
+`cowork-plugin/.claude-plugin/plugin.json` aponta para a raiz deste repo (padrão
+`C:\dev\reels-studio`). O Cowork sobe o MCP (`node ${CLAUDE_PLUGIN_ROOT}/mcp/server.mjs`) e
+as ferramentas `reels-studio`, a skill e os comandos ficam disponíveis.
 
 ## Ferramentas (MCP)
 
