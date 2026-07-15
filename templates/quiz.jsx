@@ -112,4 +112,12 @@ function ReelQuiz() {
     </Stage>
   );
 }
-window.__ReelComponent = ReelQuiz;
+// File-driven (por canal): se o projeto aponta um template de quiz e ele traz um
+// `layout`, renderiza pelo interpretador temporal (engine/quiz-renderer.jsx). Sem
+// `template`, cai no ReelQuiz inline acima — quizzes existentes ficam intactos.
+const _quizTpl = C.template && (window.__QUIZ_TEMPLATES || []).find(t => t.id === C.template);
+if (_quizTpl && Array.isArray(_quizTpl.layout) && _quizTpl.layout.length && typeof QuizFromTemplate === 'function') {
+  window.__ReelComponent = () => <QuizFromTemplate cfg={C} template={_quizTpl} />;
+} else {
+  window.__ReelComponent = ReelQuiz;
+}
