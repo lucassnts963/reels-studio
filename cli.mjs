@@ -43,6 +43,10 @@ const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
 const cmd = args[0];
 
+// Carrega ROOT/.env (se existir) — chaves de TTS etc. Vale p/ CLI, servidor e p/ o
+// `node cli.mjs` que o plugin do Cowork dispara. Não sobrescreve envs já definidas.
+try { process.loadEnvFile(path.join(ROOT, '.env')); } catch {}
+
 // ── estrutura por projeto ────────────────────────────────────────────────────
 // Cada projeto vive numa pasta única projects/<slug>/ com project.json + assets/
 // + render/. Os caminhos gravados no JSON são RELATIVOS ao projeto (ex.:

@@ -13,9 +13,11 @@ funcionam igual, sem código novo.
   `shimmer`), modelo padrão `tts-1`.
 - Padrão de provedor: `TTS_PROVIDER` (senão `elevenlabs`).
 
-As chaves ficam **no ambiente** de quem roda o `cli.mjs`/servidor (nunca commitadas). No
-plugin do Cowork, defina-as no ambiente da máquina que hospeda o MCP. **O texto da narração
-é enviado ao provedor externo** (ElevenLabs/OpenAI) para sintetizar.
+As chaves ficam **no ambiente** de quem roda o `cli.mjs`/servidor (nunca commitadas). Jeito
+mais simples: **copie `.env.example` para `.env`** na raiz do repo e preencha — o `cli.mjs`
+lê o `.env` automaticamente (vale para o CLI, o servidor e o `node cli.mjs` que o plugin do
+Cowork dispara). O `.env` está no `.gitignore`. Alternativa: exportar as env vars no sistema.
+**O texto da narração é enviado ao provedor externo** (ElevenLabs/OpenAI) para sintetizar.
 
 ## Uso
 
