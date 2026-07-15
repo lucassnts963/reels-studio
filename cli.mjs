@@ -46,8 +46,21 @@ const args = process.argv.slice(2);
 const cmd = args[0];
 
 // Carrega ROOT/.env (se existir) — chaves de TTS etc. Vale p/ CLI, servidor e p/ o
-// `node cli.mjs` que o plugin do Cowork dispara. Não sobrescreve envs já definidas.
-try { process.loadEnvFile(path.join(ROOT, '.env')); } catch {}
+// `node cli.mjs` que o plugin do Cowork dispara. O `.env` MANDA: sobrescreve envs já
+// definidas quando tem valor (o app do Cowork pode ter uma ELEVENLABS_API_KEY vazia/
+// velha no ambiente, e o process.loadEnvFile do Node NÃO sobrescreveria — por isso a
+// leitura manual). Linhas em branco/comentário e valores vazios não apagam o ambiente.
+(function loadDotEnv() {
+  try {
+    for (const line of fs.readFileSync(path.join(ROOT, '.env'), 'utf8').split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
+      if (!m) continue;
+      let v = m[2].trim();
+      if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
+      if (v !== '') process.env[m[1]] = v;
+    }
+  } catch {}
+})();
 
 // ── estrutura por projeto ────────────────────────────────────────────────────
 // Cada projeto vive numa pasta única projects/<slug>/ com project.json + assets/
