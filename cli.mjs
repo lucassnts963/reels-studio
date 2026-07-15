@@ -16,6 +16,7 @@
 //   node cli.mjs planilha                                   gera out/publicacao.xlsx (títulos/tags p/ upload manual)
 //   node cli.mjs audio <slug>                                limpa a narração crua -> assets/narracao/limpo/
 //   node cli.mjs tts <slug> [--scene <id>] [--text ...]      gera narração por TTS (ElevenLabs/OpenAI; chave em env)
+//   node cli.mjs tts-shared cta --text "Acertou? Comenta aí."  clipe de voz compartilhado (voz/<name>.m4a, reutilizável)
 //   node cli.mjs delete <slug>                               exclui projects/<slug>/ (irreversível)
 //
 // Música: coloque .mp3/.m4a em musica/ e o render embute a trilha no MP4
@@ -53,6 +54,9 @@ try { process.loadEnvFile(path.join(ROOT, '.env')); } catch {}
 // + render/. Os caminhos gravados no JSON são RELATIVOS ao projeto (ex.:
 // "assets/gravacoes/foo.mp4"), então project.json é auto-contido e portátil (.rvs).
 const PROJECTS = path.join(ROOT, 'projects');
+// voz/ = clipes de narração COMPARTILHADOS (reutilizados entre projetos, ex.: voz/cta.m4a)
+// — gerados uma vez por TTS pra não gastar créditos por vídeo.
+const VOZ = path.join(ROOT, 'voz');
 const projectDir = (slug) => path.join(PROJECTS, slug);
 const projectJson = (slug) => path.join(projectDir(slug), 'project.json');
 const renderDir = (slug) => path.join(projectDir(slug), 'render');
@@ -718,28 +722,34 @@ async function renderOne(slug, { fps = 30, port, onProgress, secure = false }) {
       const limpo = await buildSceneNarration(slug, cfg, ffmpegPath);
       cfg.narracao = { ...(cfg.narracao || {}), limpo };
     }
-    // narração muxada: tutorial (delay = intro) e quiz (delay = quando a pergunta
-    // aparece, ~2.5s, batendo com o início da fase "question" do quiz-renderer).
-    const QUIZ_NARR_START = 2.5;
-    const temNarracao = (cfg.formato === 'tutorial' || cfg.formato === 'quiz') && cfg.narracao?.limpo;
-    if (temNarracao) {
-      const narrDelaySec = cfg.formato === 'quiz' ? QUIZ_NARR_START : (cfg.intro?.duracao ?? 2.4);
-      const narracaoFile = projPath(slug, cfg.narracao.limpo);
-      if (!fs.existsSync(narracaoFile)) {
-        console.warn(`  ⚠ ${cfg.narracao.limpo} não encontrado — rode "node cli.mjs audio ${slug}" antes de renderizar`);
-      } else {
-        const tmp = outFile.replace(/\.mp4$/, '.tmp.mp4');
-        const introMs = Math.round(narrDelaySec * 1000);
-        // sem -shortest: o vídeo (com intro+corpo+outro) manda na duração final;
-        // a narração termina antes do outro e o restante fica em silêncio.
-        await run(ffmpegPath, [
-          '-y', '-i', outFile, '-i', narracaoFile,
-          '-filter_complex', `[1:a]adelay=${introMs}|${introMs}[a1]`,
-          '-map', '0:v', '-map', '[a1]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k',
-          '-t', String(meta.duration), '-movflags', '+faststart', tmp,
-        ]);
-        fs.renameSync(tmp, outFile);
-      }
+    // narração muxada como uma lista de SEGMENTOS (arquivo + atraso). tutorial:
+    // 1 segmento (narração, delay = intro). quiz: a narração da pergunta (delay ~2.5s,
+    // quando a pergunta aparece) + o clipe COMPARTILHADO voz/cta.m4a no fim (delay =
+    // início da fase CTA), reutilizado entre todos os quizzes sem gastar créditos.
+    const QUIZ_NARR_START = 2.5, QUIZ_CTA_WINDOW = 2.0;
+    const narrSegs = [];
+    if (cfg.formato === 'tutorial' && cfg.narracao?.limpo) {
+      const f = projPath(slug, cfg.narracao.limpo);
+      if (fs.existsSync(f)) narrSegs.push({ file: f, delayMs: Math.round((cfg.intro?.duracao ?? 2.4) * 1000) });
+      else console.warn(`  ⚠ ${cfg.narracao.limpo} não encontrado — rode "node cli.mjs audio ${slug}" antes de renderizar`);
+    }
+    if (cfg.formato === 'quiz') {
+      if (cfg.narracao?.limpo) { const f = projPath(slug, cfg.narracao.limpo); if (fs.existsSync(f)) narrSegs.push({ file: f, delayMs: QUIZ_NARR_START * 1000 }); }
+      const ctaFile = path.join(VOZ, 'cta.m4a'); // clipe compartilhado, gerado 1x
+      if (fs.existsSync(ctaFile)) narrSegs.push({ file: ctaFile, delayMs: Math.round(Math.max(0, meta.duration - QUIZ_CTA_WINDOW + 0.1) * 1000) });
+    }
+    if (narrSegs.length) {
+      const tmp = outFile.replace(/\.mp4$/, '.tmp.mp4');
+      const inputs = ['-y', '-i', outFile];
+      narrSegs.forEach(s => inputs.push('-i', s.file));
+      // 1 segmento: só adelay. 2+: adelay em cada e amix (normalize=0 p/ não baixar o volume).
+      const fc = narrSegs.length === 1
+        ? `[1:a]adelay=${narrSegs[0].delayMs}|${narrSegs[0].delayMs}[a]`
+        : narrSegs.map((s, i) => `[${i + 1}:a]adelay=${s.delayMs}|${s.delayMs}[d${i}]`).join(';') + ';'
+          + narrSegs.map((_, i) => `[d${i}]`).join('') + `amix=inputs=${narrSegs.length}:duration=longest:normalize=0[a]`;
+      // sem -shortest: o vídeo manda na duração final; o que sobra fica em silêncio.
+      await run(ffmpegPath, [...inputs, '-filter_complex', fc, '-map', '0:v', '-map', '[a]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-t', String(meta.duration), '-movflags', '+faststart', tmp]);
+      fs.renameSync(tmp, outFile);
     }
 
     // trilha sonora: embute uma faixa de musica/ (rotaciona pela ordem dos slugs).
@@ -748,7 +758,7 @@ async function renderOne(slug, { fps = 30, port, onProgress, secure = false }) {
       const track = pickTrack(slug);
       if (track) {
         const tmp = outFile.replace(/\.mp4$/, '.tmp.mp4');
-        if (temNarracao) {
+        if (narrSegs.length) {
           await run(ffmpegPath, [
             '-y', '-i', outFile, '-stream_loop', '-1', '-i', track,
             '-filter_complex',
@@ -973,6 +983,21 @@ async function ttsToNarration(slug, text, override = {}) {
   fs.writeFileSync(path.join(dir, slug + '.mp3'), await synthesizeTTS(text, opts));
   return cleanNarration(slug);
 }
+// TTS -> clipe COMPARTILHADO (voz/<name>.m4a) reutilizável entre projetos.
+// Gera uma vez; o render de quiz reusa voz/cta.m4a. Provedor/voz por env (sem cfg).
+async function ttsToShared(name, text, override = {}) {
+  const ffmpegPath = path.join(ROOT, 'tools', 'ffmpeg.exe');
+  const opts = resolveVoice(null, override);
+  fs.mkdirSync(VOZ, { recursive: true });
+  const rawMp3 = path.join(VOZ, name + '.raw.mp3');
+  const out = path.join(VOZ, name + '.m4a');
+  fs.writeFileSync(rawMp3, await synthesizeTTS(text, opts));
+  await run(ffmpegPath, ['-y', '-i', rawMp3, '-vn', '-af', NARRACAO_AF, '-c:a', 'aac', '-b:a', '192k', out]);
+  fs.unlinkSync(rawMp3);
+  const duracaoSegundos = +(await probeDuration(ffmpegPath, out)).toFixed(2);
+  return { src: 'voz/' + name + '.m4a', duracaoSegundos };
+}
+
 // TTS -> take de UMA cena (reusa cleanSceneAudio, trim on: TTS não tem câmera).
 async function ttsToSceneAudio(slug, sceneId, text, override = {}) {
   const cfg = loadCfg(slug);
@@ -1414,6 +1439,17 @@ async function main() {
       const r = sceneId ? await ttsToSceneAudio(slug, sceneId, text, over) : await ttsToNarration(slug, text, over);
       console.log(`✓ narração TTS (${resolveVoice(cfg, over).provider}) — ${r.duracaoSegundos}s → ${r.src || r.limpo}`);
     } catch (e) { console.error('✗ ' + String(e.message || e)); process.exitCode = 1; } // exitCode (não exit) p/ o fetch fechar limpo
+  } else if (cmd === 'tts-shared') {
+    // Gera um clipe de voz COMPARTILHADO (voz/<name>.m4a), reutilizado entre projetos.
+    // Uso: node cli.mjs tts-shared <name> --text "..." [--provider] [--voice]
+    // Ex.: node cli.mjs tts-shared cta --text "Acertou? Comenta aí."
+    const name = args[1];
+    const text = flag('text');
+    if (!name || !/^[a-z0-9-]+$/i.test(name) || !text) { console.error('uso: node cli.mjs tts-shared <name> --text "..."'); process.exit(1); }
+    try {
+      const r = await ttsToShared(name, text, { provider: flag('provider'), voice: flag('voice'), model: flag('model') });
+      console.log(`✓ clipe compartilhado — ${r.duracaoSegundos}s → ${r.src} (reutilizado por todos os projetos)`);
+    } catch (e) { console.error('✗ ' + String(e.message || e)); process.exitCode = 1; }
   } else if (cmd === 'delete') {
     // Exclui um projeto inteiro. Uso: node cli.mjs delete <slug>
     const slug = args[1];
