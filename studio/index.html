@@ -202,6 +202,23 @@
   .badge.pending { background: rgba(229,72,77,.15); color: var(--red-soft); }
   .badge.remote { background: rgba(157,180,255,.15); color: var(--blue); }
 
+  /* ── render em lote ── */
+  .home-tabs { display: flex; gap: 4px; margin-left: 8px; }
+  .home-tabs .tab { background: none; border: none; color: var(--mute); font-size: 13px; padding: 6px 10px;
+    border-radius: 7px; cursor: pointer; }
+  .home-tabs .tab.on { color: var(--fg); background: var(--card); }
+  .home-list.batch li { cursor: default; }
+  .btn.xs { padding: 3px 8px; font-size: 11px; border-radius: 6px; flex: none; }
+  .badge.batch-feito, .badge.batch-ok { background: rgba(107,212,138,.14); color: var(--green); }
+  .badge.batch-pendente { background: rgba(255,255,255,.06); color: var(--mute); }
+  .badge.batch-desatualizado { background: rgba(240,198,116,.15); color: var(--amber); }
+  .badge.batch-fila { background: rgba(157,180,255,.12); color: var(--blue); }
+  .badge.batch-render { background: rgba(157,180,255,.18); color: var(--blue); }
+  .badge.batch-erro { background: rgba(229,72,77,.15); color: var(--red-soft); }
+  .batch-prog { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10.5px; color: var(--blue); }
+  .batch-prog .bar { width: 70px; height: 4px; background: rgba(255,255,255,.12); border-radius: 2px; overflow: hidden; }
+  .batch-prog .bar > div { height: 100%; background: var(--blue); }
+
   /* ── preview offline ── */
   .preview-offline { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
     justify-content: center; gap: 10px; color: var(--body); text-align: center; padding: 24px; }

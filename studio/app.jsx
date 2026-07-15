@@ -34,6 +34,7 @@ function StudioApp() {
   const [syncMsg, setSyncMsg] = React.useState('');
   const [overlay, setOverlay] = React.useState(null); // narrow: null | 'preview' | 'gravar'
   const [gravarWide, setGravarWide] = React.useState(false); // wide: painel central = gravar
+  const [homeView, setHomeView] = React.useState('projects'); // home: 'projects' | 'lote'
 
   const iframeRef = React.useRef(null);
   const saveTimer = React.useRef(null);
@@ -306,10 +307,16 @@ function StudioApp() {
       <div className="home-wrap">
         <div className="topbar">
           <div className="brand"><span className="dot" />Studio</div>
+          <div className="home-tabs">
+            <button className={'tab' + (homeView === 'projects' ? ' on' : '')} onClick={() => setHomeView('projects')}>projetos</button>
+            <button className={'tab' + (homeView === 'lote' ? ' on' : '')} onClick={() => setHomeView('lote')}>render em lote</button>
+          </div>
           <div className="grow" />
           <ConnStatus online={online} withLabel />
         </div>
-        <ProjectHome online={online} onOpen={openProject} onNew={newProject} />
+        {homeView === 'projects'
+          ? <ProjectHome online={online} onOpen={openProject} onNew={newProject} />
+          : <BatchRender online={online} onOpen={openProject} />}
       </div>
     );
   }

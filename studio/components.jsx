@@ -940,6 +940,116 @@ function ProjectHome({ online, onOpen, onNew }) {
   );
 }
 
+// ── render em lote ───────────────────────────────────────────────────────────
+// Lista os projetos com status de render (feito/pendente/desatualizado), enfileira
+// renders SEQUENCIAIS (o servidor renderiza 1 por vez) e permite re-renderizar.
+// Só faz sentido online — a renderização exige o PC. Status do servidor via
+// GET /api/projects (rendered/stale); progresso via GET /api/render/<slug>/status.
+const BATCH_LABEL = { pendente: 'pendente', desatualizado: 'desatualizado', feito: '✓ feito', fila: 'na fila', render: 'renderizando', ok: '✓ feito', erro: '✗ erro' };
+function BatchRender({ online, onOpen }) {
+  const [items, setItems] = React.useState(null); // [{slug,formato,rendered,stale}]
+  const [rt, setRt] = React.useState({});         // slug -> {state, frame, total, error} (runtime)
+  const [fmt, setFmt] = React.useState('todos');
+  const [statusFiltro, setStatusFiltro] = React.useState('todos');
+  const [running, setRunning] = React.useState(false);
+  const stopRef = React.useRef(false);
+
+  const load = React.useCallback(() => {
+    fetch('/api/projects').then((r) => r.json()).then(setItems).catch(() => setItems([]));
+  }, []);
+  React.useEffect(() => { if (online) load(); }, [online, load]);
+
+  const baseStatus = (it) => (it.rendered ? (it.stale ? 'desatualizado' : 'feito') : 'pendente');
+  const dispStatus = (it) => rt[it.slug]?.state || baseStatus(it);
+  const counts = { pendente: 0, desatualizado: 0, feito: 0 };
+  for (const it of (items || [])) counts[baseStatus(it)]++;
+  const filtered = (items || []).filter((it) =>
+    (fmt === 'todos' || it.formato === fmt) &&
+    (statusFiltro === 'todos' || baseStatus(it) === statusFiltro));
+  const pendentes = filtered.filter((it) => baseStatus(it) !== 'feito').map((it) => it.slug);
+  const runVals = Object.values(rt);
+  const prog = { done: runVals.filter((s) => s.state === 'ok' || s.state === 'erro').length, total: runVals.length };
+
+  // renderiza um slug: POST + poll até done/error.
+  const renderSlug = (slug) => new Promise((resolve) => {
+    setRt((s) => ({ ...s, [slug]: { state: 'render', frame: 0, total: 0 } }));
+    fetch('/api/render/' + slug, { method: 'POST' }).catch(() => {});
+    const t = setInterval(async () => {
+      const st = await fetch(`/api/render/${slug}/status`).then((r) => r.json()).catch(() => null);
+      if (!st) return;
+      if (st.state === 'running') { setRt((s) => ({ ...s, [slug]: { state: 'render', frame: st.frame, total: st.total } })); return; }
+      clearInterval(t);
+      if (st.state === 'done') {
+        setRt((s) => ({ ...s, [slug]: { state: 'ok' } }));
+        setItems((list) => (list || []).map((x) => (x.slug === slug ? { ...x, rendered: true, stale: false } : x)));
+      } else if (st.state === 'error') {
+        setRt((s) => ({ ...s, [slug]: { state: 'erro', error: st.error } }));
+      } else { setRt((s) => { const n = { ...s }; delete n[slug]; return n; }); }
+      resolve();
+    }, 1000);
+  });
+  const runQueue = async (slugs) => {
+    if (!slugs.length || running) return;
+    stopRef.current = false; setRunning(true);
+    setRt((s) => { const n = { ...s }; for (const sl of slugs) n[sl] = { state: 'fila' }; return n; });
+    for (const sl of slugs) {
+      if (stopRef.current) { setRt((s) => { const n = { ...s }; if (n[sl]?.state === 'fila') delete n[sl]; return n; }); continue; }
+      await renderSlug(sl);
+    }
+    setRunning(false);
+  };
+
+  if (online === false) return <div className="home"><div className="hint">○ offline — a renderização exige o PC. Conecte-se para renderizar em lote.</div></div>;
+
+  return (
+    <div className="home">
+      <div className="home-head">
+        <h2 style={{ margin: 0 }}>render em lote</h2>
+        <div className="grow" />
+        <button className="btn sm" onClick={load} disabled={running}>atualizar</button>
+        {running
+          ? <button className="btn sm" onClick={() => { stopRef.current = true; }}>parar após atual</button>
+          : <button className="btn primary" disabled={!pendentes.length} onClick={() => runQueue(pendentes)}>renderizar pendentes{pendentes.length ? ` (${pendentes.length})` : ''}</button>}
+      </div>
+
+      <div className="home-filters">
+        <button className={'chip' + (fmt === 'todos' ? ' active' : '')} onClick={() => setFmt('todos')}>todos {items ? `(${items.length})` : ''}</button>
+        {FORMATOS.map((f) => <button key={f.key} className={'chip' + (fmt === f.key ? ' active' : '')} onClick={() => setFmt(f.key)}>{f.label}</button>)}
+      </div>
+      <div className="home-filters">
+        {[['todos', 'tudo'], ['pendente', `pendentes (${counts.pendente})`], ['desatualizado', `desatualizados (${counts.desatualizado})`], ['feito', `feitos (${counts.feito})`]].map(([k, l]) => (
+          <button key={k} className={'chip' + (statusFiltro === k ? ' active' : '')} onClick={() => setStatusFiltro(k)}>{l}</button>
+        ))}
+      </div>
+
+      {running && <div className="hint">renderizando… {prog.done}/{prog.total} concluídos (1 por vez — não feche o PC).</div>}
+      {items === null && <div className="hint">carregando…</div>}
+      {items && !filtered.length && <div className="hint">nenhum projeto aqui.</div>}
+
+      <ul className="home-list batch">
+        {filtered.slice(0, 400).map((it) => {
+          const st = dispStatus(it);
+          const r = rt[it.slug];
+          return (
+            <li key={it.slug}>
+              <span className="home-format">{it.formato}</span>
+              <span className="home-slug" style={{ cursor: 'pointer' }} onClick={() => onOpen(it.slug)}>{it.slug}</span>
+              <div className="grow" />
+              {r?.state === 'render' && (
+                <span className="batch-prog"><span className="bar"><div style={{ width: (r.total ? Math.round(100 * r.frame / r.total) : 0) + '%' }} /></span>{r.total ? Math.round(100 * r.frame / r.total) + '%' : '…'}</span>
+              )}
+              <span className={'badge batch-' + st} title={r?.error || ''}>{BATCH_LABEL[st] || st}</span>
+              {it.rendered && <a className="btn xs" href={'/projects/' + it.slug + '/render/video.mp4'} target="_blank" onClick={(e) => e.stopPropagation()}>mp4</a>}
+              <button className="btn xs" disabled={running || r?.state === 'render'} onClick={() => runQueue([it.slug])}>{it.rendered ? 'de novo' : 'renderizar'}</button>
+            </li>
+          );
+        })}
+      </ul>
+      {filtered.length > 400 && <div className="hint">mostrando 400 de {filtered.length}.</div>}
+    </div>
+  );
+}
+
 // ── teleprompter karaoke (portado do mobile) ─────────────────────────────────
 // target = duração-alvo da cena (mídia anexada); sem alvo, só cronômetro.
 function Teleprompter({ roteiro, elapsed, target }) {
