@@ -25,11 +25,15 @@ formas (docs oficiais: [use plugins](https://support.claude.com/en/articles/1383
 [marketplaces](https://code.claude.com/docs/en/plugin-marketplaces)):
 
 **A) Upload de um .zip (mais rápido, não depende de GitHub).** O Cowork aceita um `.zip`
-válido de até 50 MB. Gere o zip da pasta do plugin:
+válido de até 50 MB. Gere o zip com:
 
-```powershell
-Compress-Archive -Path C:\dev\reels-studio\cowork-plugin\* -DestinationPath C:\dev\reels-studio\cowork-plugin.zip -Force
+```bash
+node cli.mjs pack-plugin   # -> cowork-plugin.zip (caminhos POSIX, válido)
 ```
+
+⚠ **Não use `Compress-Archive` do Windows** — ele grava os caminhos com barra invertida e o
+Cowork recusa ("Zip file contains path with invalid characters"). O `pack-plugin` usa o
+mesmo empacotador dos `.rvs` (barras normais).
 
 No app: **Plugins → Adicionar → Fazer upload de plugin** → selecione `cowork-plugin.zip`
 (o `.claude-plugin/plugin.json` fica na raiz do zip). O Cowork cria/usa um marketplace e

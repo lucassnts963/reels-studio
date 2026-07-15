@@ -1184,6 +1184,15 @@ async function main() {
     const out = path.join(ROOT, id + ext);
     fs.writeFileSync(out, zipWrite(entries));
     console.log(`✓ ${id}${ext} — ${entries.length} arquivos`);
+  } else if (cmd === 'pack-plugin') {
+    // Empacota cowork-plugin/ num .zip válido (caminhos POSIX) p/ upload no Cowork.
+    // (Compress-Archive do Windows grava barra invertida — o Cowork rejeita.)
+    const dir = path.join(ROOT, 'cowork-plugin');
+    if (!fs.existsSync(dir)) { console.error('✗ cowork-plugin/ não encontrado'); process.exit(1); }
+    const entries = dirToZipEntries(dir);
+    const out = path.join(ROOT, 'cowork-plugin.zip');
+    fs.writeFileSync(out, zipWrite(entries));
+    console.log(`✓ cowork-plugin.zip — ${entries.length} arquivos (${(fs.statSync(out).size / 1024).toFixed(1)} KB). Suba em Plugins → Adicionar → Fazer upload de plugin.`);
   } else if (cmd === 'migrate') {
     // Move content/<slug>.json + pastas por-tipo para projects/<slug>/ (uma vez).
     const dry = hasFlag('dry-run');
