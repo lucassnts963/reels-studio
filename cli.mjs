@@ -15,6 +15,7 @@
 //   node cli.mjs migrate [--dry-run]                        move content/+pastas antigas p/ projects/
 //   node cli.mjs planilha                                   gera out/publicacao.xlsx (títulos/tags p/ upload manual)
 //   node cli.mjs audio <slug>                                limpa a narração crua -> assets/narracao/limpo/
+//   node cli.mjs tts <slug> [--scene <id>] [--text ...]      gera narração por TTS (ElevenLabs/OpenAI; chave em env)
 //
 // Música: coloque .mp3/.m4a em musica/ e o render embute a trilha no MP4
 // (rotaciona entre as faixas; use --sem-musica para sair mudo).
@@ -386,6 +387,31 @@ async function handleApi(req, res, url) {
     } catch (e) {
       return sendJson(res, 500, { error: String(e.message || e) });
     }
+  }
+
+  // TTS: gera narração por texto (body: { text, provider?, voice?, model? }).
+  if ((r = m(/^\/api\/tts\/([^/]+)$/i)) && req.method === 'POST') {
+    const slug = decodeURIComponent(r[1]);
+    if (!SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });
+    try {
+      const b = JSON.parse((await readBody(req)).toString('utf8') || '{}');
+      const narracao = await ttsToNarration(slug, b.text || '', { provider: b.provider, voice: b.voice, model: b.model });
+      return sendJson(res, 200, { ok: true, ...narracao });
+    } catch (e) { return sendJson(res, 500, { error: String(e.message || e) }); }
+  }
+  if ((r = m(/^\/api\/tts-cena\/([^/]+)\/([a-z0-9-]+)$/i)) && req.method === 'POST') {
+    const slug = decodeURIComponent(r[1]), sceneId = r[2];
+    if (!SLUG_RE.test(slug)) return sendJson(res, 400, { error: 'slug inválido' });
+    try {
+      const b = JSON.parse((await readBody(req)).toString('utf8') || '{}');
+      const audio = await ttsToSceneAudio(slug, sceneId, b.text || '', { provider: b.provider, voice: b.voice, model: b.model });
+      return sendJson(res, 200, { ok: true, ...audio });
+    } catch (e) { return sendJson(res, 500, { error: String(e.message || e) }); }
+  }
+  // lista as vozes de um provedor (ElevenLabs precisa da env; OpenAI é fixo).
+  if (url.pathname === '/api/voices' && req.method === 'GET') {
+    try { return sendJson(res, 200, await listVoices(url.searchParams.get('provider') || 'elevenlabs')); }
+    catch (e) { return sendJson(res, 500, { error: String(e.message || e) }); }
   }
 
   if ((r = m(/^\/api\/render\/([^/]+)\/status$/i)) && req.method === 'GET') {
@@ -861,6 +887,84 @@ async function cleanSceneAudio(slug, sceneId, { trim = true } = {}) {
   return { src: relAsset('audioCena', sceneId + '.m4a'), duracaoSegundos };
 }
 
+// ── camada de voz (TTS) ──────────────────────────────────────────────────────
+// Gera narração a partir de TEXTO por um provedor de TTS e joga no MESMO pipeline
+// de limpeza/medição da voz gravada (cleanNarration/cleanSceneAudio) — o render
+// não muda. Chaves de API vêm SÓ de env vars (nunca do código/UI).
+const TTS_PROVIDERS = {
+  // ElevenLabs: POST /v1/text-to-speech/<voiceId> -> audio/mpeg.
+  async elevenlabs(text, { voice, model }) {
+    const key = process.env.ELEVENLABS_API_KEY;
+    if (!key) throw new Error('defina a env ELEVENLABS_API_KEY');
+    if (!voice) throw new Error('defina a voz (cfg.voz.voice ou a env ELEVENLABS_VOICE_ID)');
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voice)}?output_format=mp3_44100_128`, {
+      method: 'POST',
+      headers: { 'xi-api-key': key, 'content-type': 'application/json', accept: 'audio/mpeg' },
+      body: JSON.stringify({ text, model_id: model || 'eleven_multilingual_v2', voice_settings: { stability: 0.5, similarity_boost: 0.75 } }),
+    });
+    if (!res.ok) throw new Error(`ElevenLabs ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    return Buffer.from(await res.arrayBuffer());
+  },
+  // OpenAI TTS: POST /v1/audio/speech -> mp3.
+  async openai(text, { voice, model }) {
+    const key = process.env.OPENAI_API_KEY;
+    if (!key) throw new Error('defina a env OPENAI_API_KEY');
+    const res = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ model: model || 'tts-1', voice: voice || 'alloy', input: text, response_format: 'mp3' }),
+    });
+    if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    return Buffer.from(await res.arrayBuffer());
+  },
+};
+// Resolve provider/voz/model do cfg.voz + override (args/body) + defaults por env.
+function resolveVoice(cfg, override = {}) {
+  const v = { ...(cfg?.voz || {}), ...Object.fromEntries(Object.entries(override).filter(([, x]) => x)) };
+  const provider = v.provider || process.env.TTS_PROVIDER || 'elevenlabs';
+  const voice = v.voice || (provider === 'elevenlabs' ? process.env.ELEVENLABS_VOICE_ID : process.env.OPENAI_TTS_VOICE || 'alloy');
+  return { provider, voice, model: v.model };
+}
+async function synthesizeTTS(text, { provider, voice, model } = {}) {
+  const fn = TTS_PROVIDERS[provider];
+  if (!fn) throw new Error(`provider TTS desconhecido: "${provider}" (use ${Object.keys(TTS_PROVIDERS).join(', ')})`);
+  if (!text || !text.trim()) throw new Error('texto vazio para TTS');
+  return fn(text.trim(), { voice, model });
+}
+async function listVoices(provider = 'elevenlabs') {
+  if (provider === 'openai') return ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'].map(v => ({ id: v, name: v }));
+  const key = process.env.ELEVENLABS_API_KEY;
+  if (!key) throw new Error('defina a env ELEVENLABS_API_KEY');
+  const res = await fetch('https://api.elevenlabs.io/v1/voices', { headers: { 'xi-api-key': key } });
+  if (!res.ok) throw new Error(`ElevenLabs ${res.status}`);
+  return ((await res.json()).voices || []).map(v => ({ id: v.voice_id, name: v.name }));
+}
+// remove os raws de uma unidade (menos o .m4a limpo) — pra o TTS ser a fonte nova.
+function clearRaws(dir, base) {
+  if (!fs.existsSync(dir)) return;
+  for (const f of fs.readdirSync(dir)) if (f.replace(/\.[^.]+$/, '') === base && !f.endsWith('.m4a')) { try { fs.unlinkSync(path.join(dir, f)); } catch {} }
+}
+// TTS -> narração global do projeto (reusa cleanNarration).
+async function ttsToNarration(slug, text, override = {}) {
+  const cfg = loadCfg(slug);
+  const opts = resolveVoice(cfg, override);
+  const dir = assetDir(slug, 'narracao');
+  fs.mkdirSync(dir, { recursive: true });
+  clearRaws(dir, slug);
+  fs.writeFileSync(path.join(dir, slug + '.mp3'), await synthesizeTTS(text, opts));
+  return cleanNarration(slug);
+}
+// TTS -> take de UMA cena (reusa cleanSceneAudio, trim on: TTS não tem câmera).
+async function ttsToSceneAudio(slug, sceneId, text, override = {}) {
+  const cfg = loadCfg(slug);
+  const opts = resolveVoice(cfg, override);
+  const dir = ASSET_KINDS.audioCena.dir(slug);
+  fs.mkdirSync(dir, { recursive: true });
+  clearRaws(dir, sceneId);
+  fs.writeFileSync(path.join(dir, sceneId + '.mp3'), await synthesizeTTS(text, opts));
+  return cleanSceneAudio(slug, sceneId, { trim: true });
+}
+
 // Monta a narração final a partir dos takes por cena: cada take entra no seu
 // scenes[].start (relativo ao início do corpo) via adelay, misturado sobre uma
 // base de silêncio com a duração do corpo. normalize=0 é essencial — o padrão
@@ -1275,6 +1379,26 @@ async function main() {
     loadCfg(slug); // valida que o projeto existe
     const { limpo, duracaoSegundos } = await cleanNarration(slug);
     console.log(`✓ ${limpo} — ${duracaoSegundos}s (projects/${slug}/project.json atualizado)`);
+  } else if (cmd === 'tts') {
+    // Gera narração por TTS. Uso: node cli.mjs tts <slug> [--scene <id>]
+    //   [--text "..."] [--provider elevenlabs|openai] [--voice <id>] [--model <m>]
+    // Sem --text: usa o roteiro da cena (--scene) ou a question do quiz.
+    const slug = args[1];
+    if (!slug) { console.error('uso: node cli.mjs tts <slug> [--scene <id>] [--text "..."] [--provider] [--voice]'); process.exit(1); }
+    const cfg = loadCfg(slug);
+    const sceneId = flag('scene');
+    const over = { provider: flag('provider'), voice: flag('voice'), model: flag('model') };
+    let text = flag('text');
+    if (!text) text = sceneId ? ((cfg.scenes || []).find(s => s.id === sceneId)?.roteiro || '') : (cfg.question || '').replace(/\n/g, ' ');
+    if (!text.trim()) { console.error('sem texto: passe --text, ou a cena precisa de "roteiro" / o quiz de "question"'); process.exit(1); }
+    try {
+      const r = sceneId ? await ttsToSceneAudio(slug, sceneId, text, over) : await ttsToNarration(slug, text, over);
+      console.log(`✓ narração TTS (${resolveVoice(cfg, over).provider}) — ${r.duracaoSegundos}s → ${r.src || r.limpo}`);
+    } catch (e) { console.error('✗ ' + String(e.message || e)); process.exitCode = 1; } // exitCode (não exit) p/ o fetch fechar limpo
+  } else if (cmd === 'voices') {
+    // Lista as vozes de um provedor. Uso: node cli.mjs voices [--provider elevenlabs|openai]
+    try { console.log(JSON.stringify(await listVoices(flag('provider', 'elevenlabs')), null, 2)); }
+    catch (e) { console.error('✗ ' + String(e.message || e)); process.exitCode = 1; }
   } else if (cmd === 'musica') {
     // Embute trilha nos MP4s já renderizados (sem re-renderizar): out/ -> out-com-musica/.
     // Faixas em musica/ (rotaciona). Uso: node cli.mjs musica <slug> | --all
