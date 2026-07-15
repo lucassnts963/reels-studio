@@ -1,0 +1,32 @@
+# Tema alternativo — "oceano". Mesma estrutura do elucas, com acento azul.
+# Selecione no Studio (identificação → tema) ou defina "theme": "oceano" no project.json.
+
+id: oceano
+name: Oceano (azul)
+
+brand:
+  handle: elucas.dev
+  handleAt: "@elucas.dev"
+
+# Cores (os 12 tokens). Acento azul no lugar do vermelho.
+colors:
+  ink: "#0A0F14"          # fundo do vídeo / molduras de app
+  card: "#121A22"         # cartões, terminais, keycaps
+  red: "#2E9BE6"          # cor de acento (aqui, azul)
+  redSoft: "#7Fc2F2"      # badges de destaque
+  tint: "rgba(46,155,230,0.12)"     # fundo de badge/opção correta
+  tintBorder: "rgba(46,155,230,0.32)"
+  fg: "#EAF1F7"           # texto principal
+  body: "#AEBECC"         # texto secundário
+  mute: "#7C8B99"         # texto terciário/legendas
+  line: "rgba(255,255,255,0.09)"   # divisórias
+  glow: "rgba(46,155,230,0.20)"    # brilho radial atrás das cenas
+
+fonts:
+  sans: "'IBM Plex Sans', system-ui, sans-serif"
+  mono: "'IBM Plex Mono', ui-monospace, monospace"
+
+fontFaces: []
+
+backdrop:
+  grid: dots
