@@ -1214,9 +1214,16 @@ function HistoriaEditor({ cfg, patch }) {
 function ReelEditor({ slug, cfg, nonce, online, patch, narrow, onOpenPreview }) {
   const Editor = { lista: ListaEditor, quiz: QuizEditor, historia: HistoriaEditor }[cfg.formato];
   const src = online ? `/player/player.html?reel=${encodeURIComponent(slug)}&v=${nonce}` : 'about:blank';
-  const form = Editor
-    ? <Editor cfg={cfg} patch={patch} />
-    : <div className="hint">formato "{cfg.formato}" nao tem editor visual - use o JSON.</div>;
+  const form = (
+    <React.Fragment>
+      <Group title="tema">
+        <ThemeSelect value={cfg.theme} online={online} onChange={(v) => patch({ theme: v })} />
+      </Group>
+      {Editor
+        ? <Editor cfg={cfg} patch={patch} />
+        : <div className="hint">formato "{cfg.formato}" nao tem editor visual - use o JSON.</div>}
+    </React.Fragment>
+  );
   if (narrow) {
     return (
       <div className="reel-editor narrow">
