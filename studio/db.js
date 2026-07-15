@@ -82,6 +82,12 @@ const DB = {
     await reqToPromise(tx(db, 'projects', 'readwrite').delete(slug));
   },
 
+  async deleteAssets(slug) {
+    const db = await openDB();
+    const assets = await DB.listAssets(slug);
+    for (const a of assets) await reqToPromise(tx(db, 'assets', 'readwrite').delete(a.id));
+  },
+
   async listAssets(slug) {
     const db = await openDB();
     return reqToPromise(tx(db, 'assets', 'readonly').index('slug').getAll(IDBKeyRange.only(slug)));

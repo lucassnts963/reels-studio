@@ -46,6 +46,16 @@ const Store = {
     return { items, online: remote !== null };
   },
 
+  // exclui o projeto: apaga no servidor (projects/<slug>/) e no aparelho (IndexedDB).
+  async deleteProject(slug, online) {
+    if (online) {
+      try { await fetch(Sync.getHost() + '/api/project/' + encodeURIComponent(slug), { method: 'DELETE' }); }
+      catch (e) { throw new Error('não deu pra excluir no PC: ' + (e.message || e)); }
+    }
+    await DB.deleteProject(slug);
+    await DB.deleteAssets(slug);
+  },
+
   // regra v1 de conflito: local com pendência ganha (e é empurrado);
   // senão o servidor é a fonte e é espelhado no DB.
   async loadProject(slug) {
