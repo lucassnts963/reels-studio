@@ -1,10 +1,11 @@
 // studio/sw.js — service worker do Studio unificado (desktop + celular).
-// Estratégia stale-while-revalidate para o app-shell: responde do cache na
-// hora (o app abre offline no celular, em qualquer lugar) e atualiza o cache
-// em background quando há rede. API, player, content e assets NUNCA passam
-// pelo cache — sempre rede (o offline deles é tratado pelo IndexedDB do app).
+// Estratégia NETWORK-FIRST para o app-shell: conectado, sempre pega o arquivo
+// fresco (ferramenta de dev que muda toda hora — mudanças refletem no próximo
+// carregamento, sem fechar tudo); offline, cai no cache (o app abre em qualquer
+// lugar). API, player, content e assets NUNCA passam pelo cache — sempre rede
+// (o offline deles é tratado pelo IndexedDB do app).
 
-const CACHE = 'reels-studio-studio-v13';
+const CACHE = 'reels-studio-studio-v14';
 const SHELL = [
   '/studio/',
   '/studio/index.html',
@@ -37,13 +38,11 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || !SHELL.includes(url.pathname)) return;
+  // network-first: rede na frente (sempre fresco quando online), cache no fallback.
   e.respondWith(
-    caches.match(e.request).then((cached) => {
-      const fetching = fetch(e.request).then((res) => {
-        if (res.ok) caches.open(CACHE).then((c) => c.put(e.request, res.clone()));
-        return res;
-      }).catch(() => cached);
-      return cached || fetching;
-    })
+    fetch(e.request).then((res) => {
+      if (res.ok) { const clone = res.clone(); caches.open(CACHE).then((c) => c.put(e.request, clone)); }
+      return res;
+    }).catch(() => caches.match(e.request))
   );
 });
