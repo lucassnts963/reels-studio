@@ -237,7 +237,9 @@
   /* ── layout estreito (celular): abas ── */
   .narrow-wrap { display: flex; flex-direction: column; height: 100vh; }
   .narrow-wrap .topbar { flex: none; flex-wrap: wrap; row-gap: 4px; padding: 8px 10px; height: auto; }
-  .narrow-body { flex: 1; min-height: 0; overflow-y: auto; }
+  /* respiro no fim: o último campo não pode encostar na borda inferior (barra do
+     navegador / teclado no celular cobrem os últimos px). safe-area p/ notch iOS. */
+  .narrow-body { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); }
   .narrow-page .panel-assets { border-right: none; }
   .narrow-actions { display: flex; gap: 8px; padding: 12px 14px 4px; }
   .narrow-actions .btn { flex: 1; justify-content: center; }
