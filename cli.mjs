@@ -16,6 +16,7 @@
 //   node cli.mjs planilha                                   gera out/publicacao.xlsx (títulos/tags p/ upload manual)
 //   node cli.mjs audio <slug>                                limpa a narração crua -> assets/narracao/limpo/
 //   node cli.mjs tts <slug> [--scene <id>] [--text ...]      gera narração por TTS (ElevenLabs/OpenAI; chave em env)
+//   node cli.mjs delete <slug>                               exclui projects/<slug>/ (irreversível)
 //
 // Música: coloque .mp3/.m4a em musica/ e o render embute a trilha no MP4
 // (rotaciona entre as faixas; use --sem-musica para sair mudo).
@@ -1413,6 +1414,15 @@ async function main() {
       const r = sceneId ? await ttsToSceneAudio(slug, sceneId, text, over) : await ttsToNarration(slug, text, over);
       console.log(`✓ narração TTS (${resolveVoice(cfg, over).provider}) — ${r.duracaoSegundos}s → ${r.src || r.limpo}`);
     } catch (e) { console.error('✗ ' + String(e.message || e)); process.exitCode = 1; } // exitCode (não exit) p/ o fetch fechar limpo
+  } else if (cmd === 'delete') {
+    // Exclui um projeto inteiro. Uso: node cli.mjs delete <slug>
+    const slug = args[1];
+    if (!slug || !SLUG_RE.test(slug)) { console.error('uso: node cli.mjs delete <slug>'); process.exit(1); }
+    const dir = projectDir(slug);
+    if (path.relative(PROJECTS, dir).startsWith('..')) { console.error('✗ caminho inválido'); process.exit(1); }
+    if (!fs.existsSync(dir)) { console.error(`✗ projects/${slug}/ não existe`); process.exit(1); }
+    fs.rmSync(dir, { recursive: true, force: true });
+    console.log(`✓ excluído projects/${slug}/`);
   } else if (cmd === 'voices') {
     // Lista as vozes de um provedor. Uso: node cli.mjs voices [--provider elevenlabs|openai]
     try { console.log(JSON.stringify(await listVoices(flag('provider', 'elevenlabs')), null, 2)); }

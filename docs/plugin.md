@@ -68,10 +68,12 @@ as ferramentas `reels-studio`, a skill e os comandos ficam disponíveis.
 | `read_project` / `write_project` | lê / grava `projects/<slug>/project.json` (write valida) |
 | `create_project` | cria um projeto vazio de um formato |
 | `validate` | valida um projeto (limites/campos) |
+| `delete_project` | **exclui** um projeto inteiro (não dá pra desfazer) |
 | `render_start` / `render_status` / `render_batch` / `render_stop` | render **não-bloqueante**: dispara e consulta o progresso; lote sequencial |
 | `import_spreadsheet` | importa `.xlsx` (abas quizzes/listas/historias) |
 | `import_package` | importa `.rvs` / `.rvtheme` / `.rvtemplate` |
 | `clean_audio` | limpa a narração crua e mede a duração |
+| `tts_generate` / `list_voices` | gera narração por TTS (ElevenLabs/OpenAI; chave em env) / lista vozes |
 | `export_project` / `export_theme` / `export_template` | empacota `.rvs` / `.rvtheme` / `.rvtemplate` |
 | `list_themes` / `list_quiz_templates` / `list_scene_templates` | catálogos |
 | `publish_sheet` | gera `out/publicacao.xlsx` para upload manual |
