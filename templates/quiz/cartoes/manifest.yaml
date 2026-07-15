@@ -1,0 +1,23 @@
+id: cartoes
+name: "Quiz cartões"
+desc: "Pergunta centralizada num cartão no topo, opções centradas abaixo"
+formato: quiz
+order: 20
+layout:
+  # GANCHO (texto centralizado: box de largura total + align center)
+  - { phase: hook, type: text, text: "{hook1}", x: 0, y: 720, w: 1080, anim: pop, style: { align: center, size: 100, weight: 700, color: $red, font: mono } }
+  - { phase: hook, if: hookSub, delay: 0.5, type: text, text: "{hookSub}", x: 0, y: 850, w: 1080, style: { align: center, size: 44, weight: 500, color: $body } }
+  # PERGUNTA num cartão centralizado no topo
+  - { phase: question, type: rect, x: 70, y: 400, w: 940, h: 360, style: { bg: $card, border: "1px solid $line", radius: 28 } }
+  - { phase: question, type: eyebrow, text: "// Pergunta", x: 540, y: 448, align: center }
+  - { phase: question, type: text, text: "{question}", x: 90, y: 512, w: 900, style: { align: center, size: 58, weight: 700, color: $fg, lineHeight: 1.15 } }
+  # OPÇÕES (movidas pra cima; as âncoras de reveal/contagem/CTA acompanham)
+  - { phase: options, type: options, x: 150, y: 760, w: 780 }
+  # CONTAGEM
+  - { phase: countdown, type: countdown, x: 540, y: countdownY }
+  # RESPOSTA
+  - { phase: reveal, if: reveal, type: text, text: "{reveal}", x: 0, y: captionY, w: 1080, style: { align: center, size: 46, weight: 600, color: $redSoft } }
+  # CTA + handle
+  - { phase: cta, type: text, text: "{ctaTitle}", x: 0, y: ctaY, w: 1080, style: { align: center, size: 52, weight: 700, color: $fg } }
+  - { phase: cta, type: handle, y: handleY }
+thumb: thumb.svg

@@ -1,0 +1,25 @@
+id: classico
+name: "Quiz clássico"
+desc: "Layout padrão: gancho → pergunta à esquerda → opções empilhadas"
+formato: quiz
+order: 10
+# Ritmo (mesma matemática do layout embutido). Omitir = defaults do renderer.
+timeline: { hookIn: 0.1, hookOut: 2.3, options: 3.0, optStagger: 0.4, read: 1.0, countdown: 2.8, revealHold: 2.1, cta: 2.0 }
+# Layout temporal declarativo, interpretado por engine/quiz-renderer.jsx.
+layout:
+  # GANCHO (texto centralizado: box de largura total + align center)
+  - { phase: hook, type: text, text: "{hook1}", x: 0, y: 860, w: 1080, style: { align: center, size: 104, weight: 700, color: $red, font: mono } }
+  - { phase: hook, if: hookSub, delay: 0.5, type: text, text: "{hookSub}", x: 0, y: 980, w: 1080, style: { align: center, size: 44, weight: 500, color: $body } }
+  # PERGUNTA (persiste)
+  - { phase: question, delay: -0.1, type: eyebrow, text: "// Pergunta", x: 150, y: 520 }
+  - { phase: question, type: text, text: "{question}", x: 150, y: 555, style: { size: 74, weight: 700, color: $fg } }
+  # OPÇÕES + REVEAL
+  - { phase: options, type: options, x: 150, y: 865, w: 780 }
+  # CONTAGEM
+  - { phase: countdown, type: countdown, x: 540, y: countdownY }
+  # RESPOSTA
+  - { phase: reveal, if: reveal, type: text, text: "{reveal}", x: 0, y: captionY, w: 1080, style: { align: center, size: 46, weight: 600, color: $redSoft } }
+  # CTA + handle
+  - { phase: cta, type: text, text: "{ctaTitle}", x: 0, y: ctaY, w: 1080, style: { align: center, size: 52, weight: 700, color: $fg } }
+  - { phase: cta, type: handle, y: handleY }
+thumb: thumb.svg

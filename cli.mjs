@@ -68,6 +68,7 @@ const projPath = (slug, rel) => path.join(projectDir(slug), rel);          // re
 // derrubar o servidor.
 const THEMES = path.join(ROOT, 'themes');
 const SCENE_TEMPLATES = path.join(ROOT, 'templates', 'scenes');
+const QUIZ_TEMPLATES = path.join(ROOT, 'templates', 'quiz');
 function readYaml(file) {
   try { return yamlLoad(fs.readFileSync(file, 'utf8')); }
   catch (e) { console.warn(`  ⚠ YAML inválido em ${path.relative(ROOT, file)}: ${String(e.message || e).split('\n')[0]}`); return null; }
@@ -112,6 +113,25 @@ function listSceneTemplates() {
       return man;
     })
     .filter(Boolean);
+}
+
+// Lista os templates de quiz file-driven (templates/quiz/*/manifest.yaml). Cada
+// manifesto traz um `layout` temporal interpretado por engine/quiz-renderer.jsx.
+// Espelha listSceneTemplates().
+function listQuizTemplates() {
+  if (!fs.existsSync(QUIZ_TEMPLATES)) return [];
+  return fs.readdirSync(QUIZ_TEMPLATES, { withFileTypes: true })
+    .filter(d => d.isDirectory() && fs.existsSync(path.join(QUIZ_TEMPLATES, d.name, 'manifest.yaml')))
+    .map(d => {
+      const man = readYaml(path.join(QUIZ_TEMPLATES, d.name, 'manifest.yaml'));
+      if (!man) return null;
+      man.id = man.id || d.name;
+      const thumbFile = path.join(QUIZ_TEMPLATES, d.name, man.thumb || 'thumb.svg');
+      if (fs.existsSync(thumbFile)) man.thumbSvg = fs.readFileSync(thumbFile, 'utf8');
+      return man;
+    })
+    .filter(Boolean)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
 const flag = (name, fallback) => {
@@ -203,6 +223,10 @@ async function handleApi(req, res, url) {
   // catálogo de cenas: todos os manifests (manifest.yaml -> JSON) para a galeria/inspector.
   if (url.pathname === '/api/scene-templates') {
     return sendJson(res, 200, listSceneTemplates());
+  }
+  // catálogo de layouts de quiz (por canal): manifests com layout temporal declarativo.
+  if (url.pathname === '/api/quiz-templates') {
+    return sendJson(res, 200, listQuizTemplates());
   }
 
   // lista todos os projetos com seu formato (o Studio filtra/busca na UI).
@@ -471,6 +495,11 @@ function validate(slug, cfg) {
     if (corrects !== 1) warns.push(`options: ${corrects} marcadas como corretas (deve ser exatamente 1)`);
     for (const [i, o] of (cfg.options || []).entries()) check(`options[${i}].text`, o.text, 18);
     check('reveal', cfg.reveal, 34);
+    // canal: template de layout file-driven (opcional). Sem template = layout inline.
+    if (cfg.template) {
+      const ids = listQuizTemplates().map(t => t.id);
+      if (ids.length && !ids.includes(cfg.template)) warns.push(`template: "${cfg.template}" não existe (disponíveis: ${ids.join(', ') || 'nenhum'})`);
+    }
   } else if (cfg.formato === 'historia') {
     check('hook.line1', cfg.hook?.line1, 16);
     check('hook.line2', cfg.hook?.line2, 16);

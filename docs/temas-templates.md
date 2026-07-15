@@ -148,3 +148,32 @@ molduras built-in (sem `layout`) continuam desenhadas pelo JSX — o interpretad
   lê os tokens (com o tema `elucas` como fallback embutido — sem tema, nada muda).
 - O Studio monta a galeria e o inspector a partir de `/api/scene-templates`
   (com um catálogo embutido de fallback se estiver offline).
+
+## Layout de quiz por canal (DSL temporal)
+
+Cada canal do YouTube pode ter seu próprio **layout de quiz** além do tema. Um layout
+é um arquivo `templates/quiz/<id>/manifest.yaml` com uma lista `layout` de **nós em
+fases** (o quiz é temporal: gancho → pergunta → opções → contagem → resposta → CTA).
+O projeto escolhe o layout em **canal (tema + layout) → layout do quiz** no Studio, ou
+com `"template": "<id>"` no `project.json`. **Sem `template`, usa o layout embutido** —
+os quizzes existentes não mudam.
+
+Cada nó tem uma `phase` (define a janela de tempo) e posição/estilo:
+
+- `phase`: `hook` | `question` | `options` | `countdown` | `reveal` | `cta`.
+  `delay` (s) opcional desloca o início dentro da fase.
+- `type`: os genéricos da Fase 6 (`text`/`image`/`rect`/`row`/`col`, com bindings
+  `{campo}` e tokens `$red/$fg/...`) **mais** os especiais do quiz:
+  - `options` — as alternativas (aparição escalonada + destaque da correta). `x`/`y`/`w`.
+  - `countdown` — a contagem 3-2-1. `x`/`y`.
+  - `eyebrow` — o rótulo `// ...` da marca (mono, vermelho). `text`/`x`/`y`/`align`.
+  - `handle` — o `@handle` do rodapé + subtítulo. `y`.
+- **Âncoras dinâmicas** (dependem do nº de opções), usáveis em `x`/`y` como texto, com
+  `+`/`-`: `centerX`, `optionsY`, `afterOptions`, `captionY`, `countdownY`, `ctaY`,
+  `handleY`. Se o nó `options` for movido, as âncoras seguem o novo topo.
+- `timeline: {}` (opcional) ajusta o ritmo: `options`, `optStagger`, `read`,
+  `countdown`, `revealHold`, `cta`, `hookIn`, `hookOut`. Omitido = padrão.
+
+Campos lidos dos dados do quiz: `hook1`, `hookSub`, `question`, `options[]`, `reveal`,
+`ctaTitle`, `handleSub`, `tag`. Layouts inclusos: `classico` (padrão) e `cartoes`
+(pergunta num cartão centralizado). Ex.: canal = layout `cartoes` + tema `oceano`.

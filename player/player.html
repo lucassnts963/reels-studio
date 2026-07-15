@@ -50,14 +50,16 @@
     document.head.appendChild(s);
   }
 
-  // catálogo de templates de cena (file-driven): o tutorial.jsx lê
-  // window.__SCENE_TEMPLATES para achar o `layout` declarativo de cada cena.
+  // catálogos file-driven: o tutorial.jsx lê __SCENE_TEMPLATES (layout de cena) e
+  // o quiz.jsx lê __QUIZ_TEMPLATES (layout temporal do quiz). Buscados antes do loop.
   window.__SCENE_TEMPLATES = await fetch('/api/scene-templates').then(r => r.ok ? r.json() : []).catch(() => []);
+  window.__QUIZ_TEMPLATES = await fetch('/api/quiz-templates').then(r => r.ok ? r.json() : []).catch(() => []);
 
   const files = [
     '/engine/animations.jsx',
     '/engine/reel-kit.jsx',
     '/engine/layout-renderer.jsx',
+    '/engine/quiz-renderer.jsx',
     cfg.formato === 'custom' ? '/custom/' + cfg.file : '/templates/' + cfg.formato + '.jsx',
   ];
   for (const f of files) {

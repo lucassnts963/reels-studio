@@ -542,6 +542,22 @@ function ThemeSelect({ value, online, onChange }) {
   );
 }
 
+// Seletor de layout do quiz (por canal): lista /api/quiz-templates; grava cfg.template.
+// Vazio = layout embutido (inline). Cada template é um arquivo (templates/quiz/<id>).
+function QuizTemplateSelect({ value, online, onChange }) {
+  const [tpls, setTpls] = React.useState(null);
+  React.useEffect(() => { if (online) fetch('/api/quiz-templates').then(r => r.json()).then(setTpls).catch(() => setTpls([])); }, [online]);
+  const opts = tpls || [];
+  return (
+    <F label="layout do quiz (canal)">
+      <select value={value || ''} onChange={(e) => onChange(e.target.value || undefined)} style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>
+        <option value="">embutido (padrão)</option>
+        {opts.map(t => <option key={t.id} value={t.id}>{t.name || t.id}</option>)}
+      </select>
+    </F>
+  );
+}
+
 function ProjectInspector({ slug, cfg, assets, patchCfg, onCleanGlobalAudio, cleaning, onUploadNarracao, online, onSync, syncMsg, onExportZip }) {
   const hasSceneAudio = (cfg.scenes || []).some(s => s.audio?.src);
   const [host, setHost] = React.useState(Sync.getHost());
@@ -1216,8 +1232,11 @@ function ReelEditor({ slug, cfg, nonce, online, patch, narrow, onOpenPreview }) 
   const src = online ? `/player/player.html?reel=${encodeURIComponent(slug)}&v=${nonce}` : 'about:blank';
   const form = (
     <React.Fragment>
-      <Group title="tema">
+      <Group title="canal (tema + layout)">
         <ThemeSelect value={cfg.theme} online={online} onChange={(v) => patch({ theme: v })} />
+        {cfg.formato === 'quiz' && (
+          <QuizTemplateSelect value={cfg.template} online={online} onChange={(v) => patch({ template: v })} />
+        )}
       </Group>
       {Editor
         ? <Editor cfg={cfg} patch={patch} />

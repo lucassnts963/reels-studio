@@ -1,0 +1,11 @@
+<svg viewBox="0 0 90 160" xmlns="http://www.w3.org/2000/svg">
+<rect width="90" height="160" fill="#0C0C0F"/>
+<rect x="10" y="44" width="52" height="6" rx="2" fill="#ECECEF"/>
+<rect x="10" y="54" width="40" height="6" rx="2" fill="#ECECEF"/>
+<rect x="10" y="74" width="70" height="16" rx="4" fill="#16161A" stroke="rgba(255,255,255,.12)"/>
+<rect x="10" y="94" width="70" height="16" rx="4" fill="rgba(229,72,77,.12)" stroke="rgba(229,72,77,.30)"/>
+<rect x="10" y="114" width="70" height="16" rx="4" fill="#16161A" stroke="rgba(255,255,255,.12)"/>
+<text x="14" y="86" fill="#E5484D" font-size="10" font-weight="700" font-family="IBM Plex Mono">A</text>
+<text x="14" y="106" fill="#fff" font-size="10" font-weight="700" font-family="IBM Plex Mono">B</text>
+<text x="14" y="126" fill="#E5484D" font-size="10" font-weight="700" font-family="IBM Plex Mono">C</text>
+</svg>
