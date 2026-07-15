@@ -3,7 +3,7 @@
 > Cole este prompt inteiro em uma conversa nova, e no final adicione a sua
 > ideia (pode ser só um parágrafo solto, ou uma das ideias que saiu do
 > `gerar-ideias.md`). O resultado é um JSON pronto para salvar em
-> `content/<slug>.json` e renderizar com `node cli.mjs render <slug>`.
+> `projects/<slug>/project.json` e renderizar com `node cli.mjs render <slug>`.
 
 ---
 
@@ -18,9 +18,12 @@ caracteres, então formato errado quebra o vídeo.
   depois (a menos que eu peça uma explicação à parte).
 - Escolha o `formato` mais adequado à ideia (`quiz`, `lista`, `historia` ou
   `tutorial`) — se eu já disse qual formato usar, use esse.
-- O `slug` (nome do arquivo, ex.: `content/docker-em-5-min.json`) não vai
+- O `slug` (nome da pasta, ex.: `projects/docker-em-5-min/`) não vai
   dentro do JSON — me diga o slug sugerido **antes** do bloco de código, em
   uma linha separada, formato `slug: meu-slug-aqui` (kebab-case, sem acento).
+- Campo `theme` (opcional, todos os formatos): id de um tema instalado
+  (`elucas` = padrão, `oceano` = azul). Só inclua se eu pedir um visual
+  específico; senão omita (usa o padrão).
 - Textos em português, sem emoji dentro do JSON (o layout já tem ícones/cores
   próprios).
 - Respeite os limites de caracteres por linha — eles existem porque o texto
@@ -48,7 +51,9 @@ caracteres, então formato errado quebra o vídeo.
 ```
 Limites: `question` ≤24 chars/linha · `options[].text` ≤18 chars/linha ·
 `reveal` ≤34 chars/linha. 2 a 4 `options`, **exatamente uma** com
-`correct: true`.
+`correct: true`. Campo opcional `template`: id de um layout de quiz por canal
+(`classico` = padrão embutido, `cartoes` = pergunta num cartão). Só inclua se
+eu pedir um layout específico; senão omita.
 
 ## Formato `lista` (curto, ~15-20s, vertical)
 
@@ -103,11 +108,11 @@ precisa dos dois).
   "outro": { "cta": "INSCREVA-SE", "sub": "toda semana, um tutorial novo", "duracao": 3.2 },
   "narracao": { "raw": "", "limpo": "", "duracaoSegundos": 10 },
   "scenes": [
-    { "type": "video", "layout": "desktop", "src": "gravacoes/<slug>/passo1.mp4", "duration": 5, "start": 0, "end": 5, "trimStart": 0, "numero": 1, "caption": "Passo 1: instale o Docker", "roteiro": "Fala completa que eu vou narrar enquanto gravo essa cena, frase a frase." },
-    { "type": "image", "layout": "celular", "src": "prints/<slug>/tela2.png", "duration": 4, "start": 5, "end": 9, "badge": "RESPONSIVO", "titulo": "Também no celular", "texto": "O mesmo app rodando em mobile.", "roteiro": "Fala completa da segunda cena." }
+    { "type": "video", "layout": "desktop", "src": "assets/gravacoes/passo1.mp4", "duration": 5, "start": 0, "end": 5, "trimStart": 0, "numero": 1, "caption": "Passo 1: instale o Docker", "roteiro": "Fala completa que eu vou narrar enquanto gravo essa cena, frase a frase." },
+    { "type": "image", "layout": "celular", "src": "assets/prints/tela2.png", "duration": 4, "start": 5, "end": 9, "badge": "RESPONSIVO", "titulo": "Também no celular", "texto": "O mesmo app rodando em mobile.", "roteiro": "Fala completa da segunda cena." }
   ],
   "camera": {
-    "src": "gravacoes/<slug>/camera.mp4",
+    "src": "assets/gravacoes/camera.mp4",
     "position": "bottom-right",
     "size": 280,
     "trimStart": 0
@@ -120,7 +125,7 @@ corpo do vídeo. `position` é um de `bottom-right`/`bottom-left`/`top-right`/
 `top-left`. Se eu gravar rosto+voz juntos na câmera (em vez de narração
 separada), a mesma gravação de câmera pode virar a narração também — nesse
 caso oriente a colocar uma cópia (ou o mesmo arquivo) em
-`narracao/raw/<slug>.mp4`; o comando `audio` extrai só o áudio dela.
+`projects/<slug>/assets/narracao/raw/<slug>.mp4`; o comando `audio` extrai só o áudio dela.
 
 ### Layouts de cena (`scenes[].layout`)
 
@@ -177,9 +182,10 @@ Regras importantes:
   visual (app pronto, site no ar), especialmente `"ambos"` em projetos
   responsivos.
 - `scenes[].src` aponta para arquivos que **eu ainda vou gravar/printar** e
-  colocar em `gravacoes/<slug>/` (vídeo, gravação de tela) ou `prints/<slug>/`
-  (imagem estática). Use nomes de arquivo descritivos (`passo1.mp4`,
-  `tela-config.png`), não precisa existir ainda.
+  colocar em `projects/<slug>/assets/gravacoes/` (vídeo, gravação de tela) ou
+  `projects/<slug>/assets/prints/` (imagem estática) — no JSON o caminho é
+  relativo ao projeto: `"assets/gravacoes/passo1.mp4"`. Use nomes descritivos
+  (`passo1.mp4`, `tela-config.png`), não precisa existir ainda.
 - `scenes[].caption` ≤60 chars/linha, opcional.
 - `scenes[].roteiro` — **sempre preencha**, com a fala completa (em português,
   do jeito que eu vou narrar) daquela cena específica. Esse texto **aparece na

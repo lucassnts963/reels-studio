@@ -44,7 +44,7 @@ reescreve os caminhos no JSON.
 
 ```bash
 node lotes/dia01.mjs                        # gera os 24 JSONs do dia 1 (exemplo de lote)
-node cli.mjs import quiz-shorts-30dias.xlsx # OU importa planilha (aba "quizzes") -> content/*.json
+node cli.mjs import quiz-shorts-30dias.xlsx # OU importa planilha (aba "quizzes") -> vários projects/
 node cli.mjs render --all                   # renderiza tudo
 node cli.mjs planilha                       # out/publicacao.xlsx: dia, hora, título, descrição, tags
 node cli.mjs musica --all                   # embute trilha (faixas em musica/) -> out-com-musica/
@@ -77,9 +77,13 @@ Duração se ajusta sozinha ao conteúdo (ex.: lista com 5 itens ≈ 14s; tutori
 
 `validate`/`render` avisam quando algo passa do limite.
 
-## Regras da marca (não mexer)
+## Marca / visual (tema)
 
-Só o vermelho `#E5484D` como destaque · fundo escuro sempre · IBM Plex Sans/Mono · nada de azul/verde/laranja. Tudo isso já está em `engine/reel-kit.jsx`.
+O visual vem do **tema** (file-driven). O padrão `elucas` é o da marca: acento
+vermelho `#E5484D`, fundo escuro, IBM Plex Sans/Mono. Para outro visual, escolha
+outro tema (`oceano`) ou crie o seu em `themes/<id>/theme.yaml` — os componentes
+em `engine/reel-kit.jsx` leem os tokens do tema, não têm cor fixa. Ver
+[docs/temas-templates.md](docs/temas-templates.md).
 
 ## Como o render funciona
 
@@ -98,12 +102,12 @@ gravações de tela, prints, narração e câmera opcional.
 
 ```bash
 node cli.mjs new meu-tutorial --formato tutorial
-#  → grave a narração em narracao/raw/meu-tutorial.wav (ou .mp4/.mov/.webm — ver abaixo)
-#  → coloque as gravações de tela em gravacoes/meu-tutorial/ e prints em prints/meu-tutorial/
-#  → edite content/meu-tutorial.json (scenes[], intro, outro, camera)
+#  → grave a narração em projects/meu-tutorial/assets/narracao/raw/meu-tutorial.wav (ou .mp4/.mov/.webm)
+#  → coloque gravações de tela em projects/meu-tutorial/assets/gravacoes/ e prints em .../assets/prints/
+#  → edite projects/meu-tutorial/project.json (scenes[], intro, outro, camera) — ou use o Studio
 node cli.mjs audio meu-tutorial             # limpa a narração, mede a duração real
 node cli.mjs validate meu-tutorial
-node cli.mjs render meu-tutorial            # gera out/meu-tutorial.mp4 (com áudio)
+node cli.mjs render meu-tutorial            # gera projects/meu-tutorial/render/video.mp4 (com áudio)
 ```
 
 `narracao.duracaoSegundos` nunca é chutado à mão em produção — é medido pelo
@@ -206,5 +210,22 @@ celular e anexe o arquivo no app (funciona offline; sobe no próximo sync).
 `prompts/gerar-ideias.md` e `prompts/gerar-estrutura.md` são prompts prontos
 pra colar numa conversa de IA: o primeiro gera um lote de ideias de vídeo
 (qualquer formato), o segundo transforma uma ideia escolhida no JSON completo
-pra colar em `content/<slug>.json` — já sabe os limites de caracteres e o
-schema de cada formato, incluindo os layouts de cena do `tutorial`.
+pra salvar em `projects/<slug>/project.json` — já sabe os limites de caracteres
+e o schema de cada formato, incluindo os layouts de cena do `tutorial`.
+
+## Documentação
+
+- **[docs/arquitetura.md](docs/arquitetura.md)** — guia de operação e arquitetura:
+  o que cada arquivo/pasta faz, todos os comandos e rotas, e como estender.
+- **[docs/temas-templates.md](docs/temas-templates.md)** — temas e templates
+  file-driven: criar um tema, um template de cena (tutorial) ou um layout de
+  quiz por canal — tudo com YAML, sem código.
+- **[docs/saas.md](docs/saas.md)** — roadmap futuro (camada AI/SaaS).
+
+## Temas e canais
+
+O visual é file-driven: cada projeto pode escolher um **tema** (`"theme": "<id>"`
+no `project.json`, ou no Studio) — `elucas` (padrão) ou `oceano` (azul); copie
+`themes/elucas/` para criar o seu. O **quiz** ainda escolhe um **layout de canal**
+(`"template": "<id>"`) — `classico` (padrão) ou `cartoes`. Assim, cada canal do
+YouTube tem tema + layout próprios. Detalhes em [docs/temas-templates.md](docs/temas-templates.md).
