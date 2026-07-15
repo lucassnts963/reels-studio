@@ -265,8 +265,11 @@
   .list-item { display: flex; gap: 6px; align-items: flex-start; margin-bottom: 8px; padding: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
   .list-item-body { flex: 1; min-width: 0; }
   .list-item-actions { display: flex; flex-direction: column; gap: 2px; flex: none; }
-  .reel-editor.narrow { display: block; grid-area: auto; height: 100%; }
-  .reel-editor.narrow .reel-form { border-right: none; max-width: 720px; margin: 0 auto; width: 100%; }
+  /* no estreito, o formulário flui na rolagem da página (.narrow-body): sem altura
+     fixa (height:100% recortava o conteúdo) e sem scroller próprio (overflow:auto
+     aninhado prendia a rolagem antes do fim do formulário). */
+  .reel-editor.narrow { display: block; grid-area: auto; }
+  .reel-editor.narrow .reel-form { border-right: none; max-width: 720px; margin: 0 auto; width: 100%; overflow: visible; }
   /* o preview do overlay (fs-overlay) precisa ocupar a área toda */
   .fs-overlay .reel-preview { display: flex; flex: 1; min-height: 0; }
   @media (max-width: 900px) {
