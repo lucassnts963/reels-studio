@@ -1,0 +1,100 @@
+id: passo-tela
+name: "Passo · Tela"
+desc: "Passo (nº + título) com moldura de telefone OU navegador segurando vídeo ou imagem"
+formato: tutorial
+order: 22
+scene: { type: passo-tela, duration: 5 }
+fields:
+  - { name: numero, label: "número", type: number, step: 1, default: 1 }
+  - { name: total, label: "total", type: number, step: 1, default: 5 }
+  - { name: titulo, label: "título", type: text, default: "Título do passo" }
+  - { name: legenda, label: "legenda (opcional)", type: text }
+  - name: dispositivo
+    label: "moldura"
+    type: select
+    default: celular
+    options:
+      - [celular, "Celular (moldura de telefone)"]
+      - [pc, "PC (janela de navegador)"]
+  - name: midia
+    label: "mídia"
+    type: select
+    default: imagem
+    options:
+      - [imagem, "Imagem (print)"]
+      - [video, "Vídeo (gravação)"]
+  - { name: src, label: "arquivo (print ou gravação)", type: asset, kind: media }
+  - { name: url, label: "URL na barra (só PC, decorativa)", type: text, mono: true }
+# layout declarativo: cabeçalho do passo à esquerda + a moldura escolhida com a
+# mídia escolhida. As condições `if: campo==valor` ligam só a moldura/mídia ativa.
+layout:
+  # ── cabeçalho (número + título + legenda) — abaixo da TopBar (marca+tag em y~92) ──
+  - type: text
+    x: 120
+    y: 168
+    anim: pop
+    text: "PASSO {numero|1} / {total|1}"
+    style: { size: 24, weight: 700, color: "#fff", bg: $red, radius: 8, padding: "12px 20px", font: mono, uppercase: true, letterSpacing: ".08em" }
+  - type: text
+    x: 120
+    y: 240
+    w: 1120
+    anim: pop
+    text: "{titulo}"
+    style: { size: 74, weight: 700, color: $fg, lineHeight: 1.05 }
+  - type: text
+    if: legenda
+    x: 120
+    y: 384
+    w: 1120
+    anim: fade
+    text: "{legenda}"
+    style: { size: 32, color: $body, lineHeight: 1.4 }
+  # ── moldura de CELULAR (telefone), à direita ──
+  - type: frame
+    if: dispositivo==celular
+    kind: phone
+    x: 1360
+    y: 150
+    anim: pop
+    children:
+      - type: image
+        if: midia==imagem
+        w: "100%"
+        h: "100%"
+        src: "{src}"
+        fit: cover
+        kenBurns: true
+      - type: video
+        if: midia==video
+        w: "100%"
+        h: "100%"
+        src: "{src}"
+        fit: cover
+        loop: true
+  # ── moldura de PC (navegador), abaixo do cabeçalho ──
+  - type: frame
+    if: dispositivo==pc
+    kind: browser
+    x: 120
+    y: 486
+    w: 1680
+    h: 540
+    url: "{url|localhost:3000}"
+    anim: pop
+    children:
+      - type: image
+        if: midia==imagem
+        w: "100%"
+        h: "100%"
+        src: "{src}"
+        fit: cover
+        kenBurns: true
+      - type: video
+        if: midia==video
+        w: "100%"
+        h: "100%"
+        src: "{src}"
+        fit: cover
+        loop: true
+thumb: thumb.svg
