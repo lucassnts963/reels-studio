@@ -339,7 +339,25 @@ async function handleApi(req, res, url) {
     const dir = spec.dir(slug);
     fs.mkdirSync(dir, { recursive: true });
     // narracao: um arquivo cru por slug — normaliza o nome para <slug>.<ext>, sobrescrevendo o anterior.
-    const finalName = kind === 'narracao' ? slug + path.extname(filename).toLowerCase() : filename;
+    // audioCena: o take LIMPO é <sceneId>.m4a na mesma pasta; um upload cru .m4a
+    // colidiria com ele, então vira <sceneId>.src.m4a (o finder do clean conhece).
+    const ext = path.extname(filename).toLowerCase();
+    const finalName = kind === 'narracao' ? slug + ext
+      : (kind === 'audioCena' && ext === '.m4a') ? filename.replace(/\.m4a$/i, '.src.m4a')
+      : filename;
+    // remove raws antigos do MESMO alvo em outra extensão (senão o clean, que acha
+    // o raw por extensão, pode pegar um arquivo velho). narracao: 1 raw por slug
+    // (a pasta raw/ nunca tem o limpo — esse fica em limpo/); audioCena: 1 raw por
+    // cena, preservando o <sceneId>.m4a LIMPO (que fica junto dos raws).
+    if (kind === 'narracao' || kind === 'audioCena') {
+      const keyOf = (f) => f.replace(/\.src\.m4a$/i, '').replace(/\.[^.]+$/, '');
+      const key = keyOf(finalName);
+      for (const f of fs.readdirSync(dir)) {
+        if (f === finalName || keyOf(f) !== key) continue;
+        if (kind === 'audioCena' && f === key + '.m4a') continue; // é o take limpo
+        try { fs.unlinkSync(path.join(dir, f)); } catch {}
+      }
+    }
     const body = await readBody(req);
     fs.writeFileSync(path.join(dir, finalName), body);
     return sendJson(res, 200, { ok: true, path: relAsset(kind, finalName) });
@@ -940,8 +958,11 @@ async function cleanNarration(slug) {
 async function cleanSceneAudio(slug, sceneId, { trim = true } = {}) {
   const ffmpegPath = path.join(ROOT, 'tools', 'ffmpeg.exe');
   const dir = ASSET_KINDS.audioCena.dir(slug);
+  // raw = <sceneId>.<ext> gravado, ou <sceneId>.src.m4a (upload .m4a) — nunca o
+  // <sceneId>.m4a LIMPO, que mora na mesma pasta.
   const raw = fs.existsSync(dir)
-    ? fs.readdirSync(dir).find(f => f.replace(/\.[^.]+$/, '') === sceneId && ASSET_KINDS.audioCena.ext.test(f) && !f.endsWith('.m4a'))
+    ? fs.readdirSync(dir).find(f => f !== sceneId + '.m4a' && ASSET_KINDS.audioCena.ext.test(f)
+        && f.replace(/\.src\.m4a$/i, '').replace(/\.[^.]+$/, '') === sceneId)
     : null;
   if (!raw) throw new Error(`narracao/cenas/${slug}/${sceneId}.* não encontrado`);
   const limpoAbs = path.join(dir, sceneId + '.m4a');

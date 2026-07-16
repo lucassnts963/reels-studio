@@ -61,3 +61,15 @@ MCP (plugin Cowork): `tts_generate { slug, sceneId?, text?, provider?, voice? }`
 - **tutorial** e **noticias**: narração por cena (o take/TTS de cada cena define a duração).
 - **quiz**: narração da pergunta — a cena da pergunta fica no ar pelo tempo da fala.
 - lista/história: sem narração por enquanto (só música de fundo).
+
+## Três fontes de áudio (Studio)
+
+No Studio, todo controle de áudio (narração da pergunta no quiz e o take de cada cena
+no tutorial/noticias) oferece **as mesmas três fontes**, com player para ouvir o atual:
+
+- **gravar** — grava a voz pelo microfone (cena aceita câmera p/ a bolha PiP).
+- **gerar por TTS** — sintetiza da pergunta (quiz) ou do roteiro (cena).
+- **escolher arquivo** — sobe um áudio do disco (wav/mp3/m4a/aac/ogg/webm).
+
+As três passam pela MESMA limpeza/normalização (`NARRACAO_AF`) e medição de duração —
+o render não muda. Para cena, TTS/arquivo definem a duração pela fala e descartam a câmera.

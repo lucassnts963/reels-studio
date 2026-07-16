@@ -303,56 +303,33 @@ function useTakeRecorder({ onUse, defaultCamera = false }) {
 }
 
 // ── gravador de take no inspector da cena ────────────────────────────────────
-function SceneAudioRecorder({ scene, assetUrl, onUse, onRemoveAudio, onRemoveCamera }) {
-  const r = useTakeRecorder({ onUse, defaultCamera: scene.type === 'camera-intro' });
+function SceneAudioRecorder({ scene, assetUrl, online, onUse, onTTS, onPickFile, onRemoveAudio, onRemoveCamera }) {
   const takeUrl = scene.audio?.src ? assetUrl(scene.audio.src) : null;
+  const cur = scene.audio?.duracaoSegundos != null ? { duracaoSegundos: scene.audio.duracaoSegundos } : null;
   return (
-    <Group title="take da cena (áudio + câmera opcional)" right={scene.audio?.src
-      ? <button className="btn sm danger" onClick={() => onRemoveAudio(scene.id)} title="remover o take desta cena">remover</button>
-      : null}>
+    <Group title="áudio da cena (gravar · TTS · arquivo)">
       <div className="rec-box">
-        {scene.audio?.src && r.state === 'idle' && (
-          <React.Fragment>
-            <div className="rec-status">
-              take {scene.audio.pendente ? 'pendente de limpeza (sincronize com o PC)' : 'gravado'} · {fmtSecs(scene.audio.duracaoSegundos)} (define a duração da cena)
-              {scene.camera?.src ? ' · com câmera' : ''}
-            </div>
-            {takeUrl && <audio className="rec-audio" controls src={takeUrl} preload="none" />}
-            {scene.camera?.src && (
-              <button className="btn sm" onClick={() => onRemoveCamera(scene.id)}>remover só a câmera (manter áudio)</button>
-            )}
-          </React.Fragment>
+        {scene.audio?.pendente && <div className="hint">take pendente de limpeza (sincronize com o PC).</div>}
+        {scene.audio?.src && scene.camera?.src && (
+          <div className="hint">com câmera (bolha PiP nesta cena) · <button className="btn xs" onClick={() => onRemoveCamera(scene.id)}>remover só a câmera</button></div>
         )}
-        {scene.roteiro && r.state !== 'review' && <div className="rec-roteiro">{scene.roteiro}</div>}
-        {!scene.roteiro && r.state === 'idle' && <div className="hint">dica: preencha o roteiro da cena para lê-lo aqui enquanto grava.</div>}
-
-        {r.state === 'idle' && (
-          <React.Fragment>
-            <label className="check"><input type="checkbox" checked={r.comCamera} onChange={(e) => r.setComCamera(e.target.checked)} /> gravar com câmera (bolha PiP nesta cena)</label>
-            <button className="btn" onClick={r.start}><Ic.mic /> {scene.audio?.src ? 'regravar take' : 'gravar take'}</button>
-          </React.Fragment>
-        )}
-        {r.state === 'recording' && (
-          <React.Fragment>
-            {r.comCamera && <video ref={r.camPreviewRef} autoPlay muted playsInline style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--red)' }} />}
-            <div className="rec-status"><span className="live">● REC</span> {r.secs.toFixed(1)}s</div>
-            <button className="btn primary" onClick={r.stop}>parar</button>
-          </React.Fragment>
-        )}
-        {r.state === 'review' && (
-          <React.Fragment>
-            {r.wasCamera
-              ? <video controls src={r.reviewUrl} style={{ width: '100%', borderRadius: 8 }} />
-              : <audio className="rec-audio" controls src={r.reviewUrl} />}
-            <div className="row">
-              <button className="btn primary" onClick={r.use}>usar take</button>
-              <button className="btn" onClick={() => { r.discard(); r.start(); }}>regravar</button>
-              <button className="btn danger" onClick={r.discard}>descartar</button>
-            </div>
-          </React.Fragment>
-        )}
-        {r.state === 'busy' && <div className="rec-status">salvando o take…</div>}
-        {r.err && <div className="hint" style={{ color: 'var(--red-soft)' }}>{r.err}</div>}
+        {scene.roteiro
+          ? <div className="rec-roteiro">{scene.roteiro}</div>
+          : <div className="hint">dica: preencha o roteiro da cena — ele é lido durante a gravação e usado como texto do TTS.</div>}
+        <AudioSource
+          online={online}
+          current={cur}
+          currentUrl={takeUrl}
+          ttsText={() => (scene.roteiro || '').replace(/\n/g, ' ')}
+          ttsHint="TTS/arquivo definem a duração da cena pela fala (a câmera é descartada)."
+          recordLabel={scene.audio?.src ? 'regravar take' : 'gravar take'}
+          allowCamera
+          defaultCamera={scene.type === 'camera-intro'}
+          onRecord={onUse}
+          onTTS={onTTS}
+          onPickFile={onPickFile}
+          onRemove={scene.audio?.src ? () => onRemoveAudio(scene.id) : null}
+        />
       </div>
     </Group>
   );
@@ -386,7 +363,7 @@ function SceneField({ field: f, value, onChange, assets }) {
   return <TextField label={label} value={value} mono={f.mono} placeholder={f.placeholder} onChange={onChange} />;
 }
 
-function SceneInspector({ slug, cfg, index, assets, assetUrl, catalog, patchScene, onMove, onRemove, onTake, onRemoveAudio, onRemoveCamera }) {
+function SceneInspector({ slug, cfg, index, assets, assetUrl, catalog, online, patchScene, onMove, onRemove, onTake, onTakeTTS, onTakeFile, onRemoveAudio, onRemoveCamera }) {
   const s = cfg.scenes[index];
   if (!s) return null;
   const meta = TYPE_META[s.type] || TYPE_META.video;
@@ -458,8 +435,9 @@ function SceneInspector({ slug, cfg, index, assets, assetUrl, catalog, patchScen
             placeholder="texto lido durante a gravação (aqui e no app móvel)" />
         </Group>
 
-        <SceneAudioRecorder scene={s} assetUrl={assetUrl}
+        <SceneAudioRecorder scene={s} assetUrl={assetUrl} online={online}
           onUse={(blob, comCamera) => onTake(s, blob, comCamera)}
+          onTTS={() => onTakeTTS(s)} onPickFile={(file) => onTakeFile(s, file)}
           onRemoveAudio={onRemoveAudio} onRemoveCamera={onRemoveCamera} />
       </div>
     </React.Fragment>
@@ -1253,46 +1231,101 @@ function ListaEditor({ cfg, patch }) {
   );
 }
 
-// Narração da pergunta (quiz): grava a voz OU gera por TTS. Grava cfg.narracao
-// (o render muxa e a cena da pergunta passa a durar o tempo da fala). Só online.
-function NarracaoQuiz({ slug, cfg, online, patch }) {
+// Controle unificado de fonte de áudio: GRAVAR a voz, gerar por TTS, ou ESCOLHER
+// um arquivo do disco — mais o player do áudio atual (ouvir). Usado na narração
+// da pergunta (quiz) e nos takes de cena. O pai fornece a persistência via os
+// callbacks onRecord/onTTS/onPickFile; este componente só cuida da UI/estado.
+function AudioSource({ online, current, currentUrl, ttsText, ttsHint, onRecord, onTTS, onPickFile, onRemove, allowCamera, defaultCamera, recordLabel = 'gravar' }) {
   const [busy, setBusy] = React.useState('');
   const [err, setErr] = React.useState('');
-  const rec = useTakeRecorder({
-    onUse: async (blob) => {
-      setErr(''); setBusy('enviando…');
-      try {
-        await fetch(`/api/assets/${encodeURIComponent(slug)}/narracao/${encodeURIComponent(slug)}.webm`, { method: 'PUT', body: blob });
-        const n = await api(`/api/audio/${encodeURIComponent(slug)}`, { method: 'POST' });
-        patch({ narracao: { raw: n.raw, limpo: n.limpo, duracaoSegundos: n.duracaoSegundos } });
-      } catch (e) { setErr(String(e.message || e)); } finally { setBusy(''); }
-    },
-  });
-  const gerarTTS = async () => {
-    const text = (cfg.question || '').replace(/\n/g, ' ').trim();
-    if (!text) { setErr('escreva a pergunta primeiro'); return; }
-    setErr(''); setBusy('gerando (TTS)…');
-    try {
-      const n = await api(`/api/tts/${encodeURIComponent(slug)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text }) });
-      patch({ narracao: { raw: n.raw, limpo: n.limpo, duracaoSegundos: n.duracaoSegundos } });
-    } catch (e) { setErr(String(e.message || e)); } finally { setBusy(''); }
+  const fileRef = React.useRef(null);
+  const rec = useTakeRecorder({ defaultCamera: !!defaultCamera, onUse: async (blob, comCamera) => { setErr(''); await onRecord(blob, comCamera); } });
+  const guarded = (label, fn) => async (arg) => {
+    setErr(''); setBusy(label);
+    try { await fn(arg); } catch (e) { setErr(String(e.message || e)); } finally { setBusy(''); }
   };
-  const dur = cfg.narracao?.duracaoSegundos;
-  if (!online) return <div className="hint">narração exige o PC conectado.</div>;
+  const doTTS = guarded('gerando (TTS)…', async () => {
+    const t = ((typeof ttsText === 'function' ? ttsText() : ttsText) || '').trim();
+    if (!t) throw new Error('escreva o texto (pergunta/roteiro) primeiro');
+    await onTTS(t);
+  });
+  const pick = guarded('enviando arquivo…', async (e) => {
+    const f = e.target.files?.[0]; e.target.value = '';
+    if (f) await onPickFile(f);
+  });
+  const ttsReady = !!((typeof ttsText === 'function' ? ttsText() : ttsText) || '').trim();
+  if (!online) return <div className="hint">áudio exige o PC conectado.</div>;
+  const locked = !!busy || rec.state === 'recording' || rec.state === 'busy';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {dur > 0 && <div className="hint">✓ narração: {fmtSecs(dur)} — a pergunta fica no ar esse tempo. <button className="btn xs" onClick={() => patch({ narracao: undefined })}>remover</button></div>}
+      {current?.duracaoSegundos != null && (
+        <div className="row" style={{ alignItems: 'center' }}>
+          {currentUrl
+            ? <audio controls src={currentUrl} style={{ flex: 1, height: 32 }} preload="none" />
+            : <span className="hint" style={{ flex: 1 }}>áudio atual</span>}
+          <span className="hint" style={{ flex: 'none' }}>{fmtSecs(current.duracaoSegundos)}</span>
+          {onRemove && <button className="btn xs" style={{ flex: 'none' }} onClick={onRemove} disabled={locked}>remover</button>}
+        </div>
+      )}
       <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
         {rec.state === 'recording'
-          ? <button className="btn sm danger" onClick={rec.stop}>parar ({rec.secs}s)</button>
-          : <button className="btn sm" onClick={rec.start} disabled={!!busy}><Ic.mic /> gravar voz</button>}
-        {rec.state === 'review' && <><button className="btn sm primary" onClick={rec.use}>usar</button><button className="btn sm" onClick={rec.discard}>descartar</button></>}
-        <button className="btn sm" onClick={gerarTTS} disabled={!!busy || rec.state === 'recording'}>gerar por TTS</button>
+          ? <button className="btn sm danger" onClick={rec.stop}>parar ({rec.secs.toFixed(1)}s)</button>
+          : <button className="btn sm" onClick={rec.start} disabled={locked}><Ic.mic /> {recordLabel}</button>}
+        <button className="btn sm" onClick={doTTS} disabled={locked || !ttsReady} title={ttsReady ? '' : 'preencha o texto primeiro'}>gerar por TTS</button>
+        <button className="btn sm" onClick={() => fileRef.current?.click()} disabled={locked}>escolher arquivo</button>
+        <input ref={fileRef} type="file" accept="audio/*,video/*" style={{ display: 'none' }} onChange={pick} />
+        {allowCamera && rec.state === 'idle' && (
+          <label className="check" style={{ margin: 0 }}><input type="checkbox" checked={rec.comCamera} onChange={(e) => rec.setComCamera(e.target.checked)} /> câmera</label>
+        )}
       </div>
-      {rec.reviewUrl && rec.state === 'review' && <audio src={rec.reviewUrl} controls style={{ width: '100%' }} />}
+      {rec.state === 'recording' && allowCamera && rec.comCamera && (
+        <video ref={rec.camPreviewRef} autoPlay muted playsInline style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--red)' }} />
+      )}
+      {rec.state === 'review' && (
+        <div className="row" style={{ flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+          {rec.wasCamera
+            ? <video controls src={rec.reviewUrl} style={{ maxHeight: 120, borderRadius: 8 }} />
+            : <audio controls src={rec.reviewUrl} style={{ flex: 1, height: 32 }} />}
+          <button className="btn sm primary" style={{ flex: 'none' }} onClick={rec.use}>usar</button>
+          <button className="btn sm" style={{ flex: 'none' }} onClick={() => { rec.discard(); rec.start(); }}>regravar</button>
+          <button className="btn sm danger" style={{ flex: 'none' }} onClick={rec.discard}>descartar</button>
+        </div>
+      )}
       {busy && <div className="hint">{busy}</div>}
-      {(err || rec.err) && <div className="warn-chip" title={err || rec.err}>✗ {(err || rec.err).slice(0, 80)}</div>}
-      <div className="hint">TTS usa a pergunta como texto. Provedor/voz por env (ver docs/voz-tts.md).</div>
+      {(err || rec.err) && <div className="warn-chip" title={err || rec.err}>✗ {(err || rec.err).slice(0, 90)}</div>}
+      {ttsHint && <div className="hint">{ttsHint}</div>}
+    </div>
+  );
+}
+
+// Narração da pergunta (quiz): gravar a voz, gerar por TTS, ou escolher um arquivo.
+// Grava cfg.narracao (o render muxa e a cena da pergunta dura o tempo da fala).
+function NarracaoQuiz({ slug, cfg, online, patch, assetUrl }) {
+  const applyNarracao = async (promise) => {
+    const n = await promise;
+    patch({ narracao: { raw: n.raw, limpo: n.limpo, duracaoSegundos: n.duracaoSegundos } });
+  };
+  const putRawThenClean = async (blob, filename) => {
+    const put = await fetch(`/api/assets/${encodeURIComponent(slug)}/narracao/${encodeURIComponent(filename)}`, { method: 'PUT', body: blob });
+    if (!put.ok) throw new Error((await put.json().catch(() => ({}))).error || 'falha ao enviar o áudio');
+    return api(`/api/audio/${encodeURIComponent(slug)}`, { method: 'POST' });
+  };
+  const cur = cfg.narracao?.duracaoSegundos != null ? { duracaoSegundos: cfg.narracao.duracaoSegundos } : null;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <AudioSource
+        online={online}
+        current={cur}
+        currentUrl={assetUrl && assetUrl(cfg.narracao?.limpo)}
+        ttsText={() => (cfg.question || '').replace(/\n/g, ' ')}
+        ttsHint="TTS usa a pergunta como texto. Provedor/voz por env (ver docs/voz-tts.md)."
+        recordLabel="gravar voz"
+        onRecord={(blob) => applyNarracao(putRawThenClean(blob, slug + '.webm'))}
+        onPickFile={(file) => applyNarracao(putRawThenClean(file, slug + (file.name.match(/\.[^.]+$/)?.[0] || '.mp3').toLowerCase()))}
+        onTTS={(text) => applyNarracao(api(`/api/tts/${encodeURIComponent(slug)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text }) }))}
+        onRemove={() => patch({ narracao: undefined })}
+      />
+      {cur && <div className="hint">✓ a pergunta fica no ar {fmtSecs(cur.duracaoSegundos)} (duração da fala).</div>}
     </div>
   );
 }
@@ -1344,7 +1377,7 @@ function CtaAudio({ online }) {
   );
 }
 
-function QuizEditor({ cfg, patch, slug, online }) {
+function QuizEditor({ cfg, patch, slug, online, assetUrl }) {
   const options = cfg.options || [];
   const setCorrect = (idx) => patch({ options: options.map((o, i) => ({ ...o, correct: i === idx })) });
   return (
@@ -1358,7 +1391,7 @@ function QuizEditor({ cfg, patch, slug, online }) {
         <AreaField label="pergunta (uma frase por linha, ate 24/linha)" value={cfg.question} onChange={(v) => patch({ question: v })} rows={3} />
       </Group>
       <Group title="narração da pergunta (opcional)">
-        <NarracaoQuiz slug={slug} cfg={cfg} online={online} patch={patch} />
+        <NarracaoQuiz slug={slug} cfg={cfg} online={online} patch={patch} assetUrl={assetUrl} />
       </Group>
       <Group title="opcoes (2 a 4, marque a correta)">
         <ListEditor label="opcoes" items={options} min={2} max={4}
@@ -1454,7 +1487,7 @@ function HistoriaEditor({ cfg, patch }) {
 
 // editor de reel vertical: formulario do formato + preview retrato tocando.
 // narrow (celular): só o formulário, com botão pra abrir o preview em overlay.
-function ReelEditor({ slug, cfg, nonce, online, patch, narrow, onOpenPreview }) {
+function ReelEditor({ slug, cfg, nonce, online, patch, assetUrl, narrow, onOpenPreview }) {
   const Editor = { lista: ListaEditor, quiz: QuizEditor, historia: HistoriaEditor }[cfg.formato];
   const src = online ? `/player/player.html?reel=${encodeURIComponent(slug)}&v=${nonce}` : 'about:blank';
   const form = (
@@ -1466,7 +1499,7 @@ function ReelEditor({ slug, cfg, nonce, online, patch, narrow, onOpenPreview }) 
         )}
       </Group>
       {Editor
-        ? <Editor cfg={cfg} patch={patch} slug={slug} online={online} />
+        ? <Editor cfg={cfg} patch={patch} slug={slug} online={online} assetUrl={assetUrl} />
         : <div className="hint">formato "{cfg.formato}" nao tem editor visual - use o JSON.</div>}
     </React.Fragment>
   );

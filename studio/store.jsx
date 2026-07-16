@@ -152,6 +152,30 @@ const Store = {
     return { audio: { src: Store.pathFor(slug, 'audioCena', `${scene.id}.m4a`), duracaoSegundos: dur || 3, pendente: true }, camera };
   },
 
+  // narração de UMA cena por TTS (usa o roteiro como texto). Só online.
+  async sceneAudioFromTTS(slug, scene, text) {
+    const host = Sync.getHost();
+    const res = await fetch(`${host}/api/tts-cena/${encodeURIComponent(slug)}/${encodeURIComponent(scene.id)}`, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text }),
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'falha no TTS da cena');
+    const audio = await res.json();
+    return { src: audio.src, duracaoSegundos: audio.duracaoSegundos };
+  },
+
+  // narração de UMA cena a partir de um ARQUIVO escolhido (sobe como <sceneId>.<ext>
+  // e limpa/mede pelo mesmo pipeline). Só online.
+  async sceneAudioFromFile(slug, scene, file) {
+    const ext = (file.name.match(/\.[^.]+$/)?.[0] || '.mp3').toLowerCase();
+    const host = Sync.getHost();
+    const put = await fetch(`${host}/api/assets/${encodeURIComponent(slug)}/audioCena/${encodeURIComponent(scene.id + ext)}`, { method: 'PUT', body: file });
+    if (!put.ok) throw new Error((await put.json().catch(() => ({}))).error || 'falha ao enviar o arquivo');
+    const res = await fetch(`${host}/api/audio-cena/${encodeURIComponent(slug)}/${encodeURIComponent(scene.id)}`, { method: 'POST' });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'falha ao limpar o áudio');
+    const audio = await res.json();
+    return { src: audio.src, duracaoSegundos: audio.duracaoSegundos };
+  },
+
   // mapa path -> objectURL dos blobs locais (para thumbnails/preview offline
   // e assets ainda não sincronizados). Quem consome revoga na troca de projeto.
   async localUrlMap(slug) {
