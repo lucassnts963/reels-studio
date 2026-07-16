@@ -74,20 +74,19 @@ function TutorialScene({ scene, start, end }) {
     );
   }
   if (scene.type === 'passo') {
-    // mídia opcional à direita (print ou vídeo) enquanto o passo é explicado.
-    // Sem scene.src, o cartão fica idêntico ao de antes.
-    const stepBox = { x: 1120, y: 200, width: 680, height: 680 };
+    // mídia opcional à direita, na moldura do dispositivo: telefone p/ celular,
+    // navegador p/ PC. Sem scene.src, o cartão fica idêntico ao de antes.
+    const isPc = scene.dispositivo === 'pc';
+    const mkMedia = (w, h) => scene.midia === 'video'
+      ? <VideoSprite src={abs(scene.src)} start={start} end={end} trimStart={scene.trimStart || 0} loop
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+      : <ImageSprite src={abs(scene.src)} x={0} y={0} width={w} height={h} fit="cover" radius={0} kenBurns={!!scene.kenBurns} />;
     return (
       <Sprite start={start} end={end}>
         <StepCard numero={scene.numero} total={scene.total} titulo={scene.titulo} subtitulo={scene.subtitulo} compact={!!scene.src} />
-        {scene.src && (
-          <div style={{ position: 'absolute', left: stepBox.x, top: stepBox.y, width: stepBox.width, height: stepBox.height,
-            borderRadius: 20, overflow: 'hidden', background: BRAND.card, border: '1px solid rgba(255,255,255,.10)', boxShadow: '0 40px 100px rgba(0,0,0,.55)' }}>
-            {scene.midia === 'video'
-              ? <VideoSprite src={abs(scene.src)} start={start} end={end} trimStart={scene.trimStart || 0} loop
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
-              : <ImageSprite src={abs(scene.src)} x={0} y={0} width={stepBox.width} height={stepBox.height} fit="contain" radius={0} kenBurns={!!scene.kenBurns} />}
-          </div>
+        {scene.src && (isPc
+          ? <BrowserFrame url={scene.url || undefined} x={1044} y={288} w={796} h={504}>{mkMedia(796, 431)}</BrowserFrame>
+          : <div style={{ position: 'absolute', left: 1256, top: 120 }}><PhoneFrame>{mkMedia(440, 900)}</PhoneFrame></div>
         )}
       </Sprite>
     );
