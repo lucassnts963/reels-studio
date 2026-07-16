@@ -9,3 +9,11 @@ fields:
   - { name: total, label: "total", type: number, step: 1, default: 5 }
   - { name: titulo, label: "título", type: text, default: "Título do passo" }
   - { name: subtitulo, label: "subtítulo", type: text }
+  - { name: src, label: "mídia à direita (opcional: print ou vídeo)", type: asset, kind: media }
+  - name: midia
+    label: "tipo da mídia (se houver)"
+    type: select
+    default: imagem
+    options:
+      - [imagem, "Imagem (print)"]
+      - [video, "Vídeo (gravação)"]

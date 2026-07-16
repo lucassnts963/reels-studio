@@ -278,13 +278,15 @@ function CameraIntroScene({ badge, titulo = '', subtitulo = '', children }) {
 }
 
 // Cartão de transição entre passos (sem mídia): número grande + título.
-function StepCard({ numero = 1, total = 1, titulo = '', subtitulo = '' }) {
+// compact=true encolhe a coluna de texto p/ caber uma mídia opcional à direita
+// (desenhada por fora, no tutorial.jsx). Sem mídia, o layout é o de sempre.
+function StepCard({ numero = 1, total = 1, titulo = '', subtitulo = '', compact = false }) {
   return (
-    <div style={{ position: 'absolute', inset: 0, padding: '0 120px', display: 'flex', alignItems: 'center', gap: 70 }}>
-      <div style={{ fontFamily: BRAND.mono, fontSize: 260, fontWeight: 700, color: BRAND.red, lineHeight: .8, letterSpacing: '-.04em' }}>{String(numero).padStart(2, '0')}</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 22, borderLeft: '2px solid rgba(229,72,77,.4)', paddingLeft: 56 }}>
+    <div style={{ position: 'absolute', inset: 0, padding: '0 120px', display: 'flex', alignItems: 'center', gap: compact ? 48 : 70 }}>
+      <div style={{ fontFamily: BRAND.mono, fontSize: compact ? 200 : 260, fontWeight: 700, color: BRAND.red, lineHeight: .8, letterSpacing: '-.04em', flex: 'none' }}>{String(numero).padStart(2, '0')}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 22, borderLeft: '2px solid rgba(229,72,77,.4)', paddingLeft: compact ? 44 : 56, maxWidth: compact ? 560 : undefined }}>
         <div style={{ fontFamily: BRAND.mono, fontSize: 26, color: BRAND.mute, letterSpacing: '.14em', textTransform: 'uppercase' }}>passo {String(numero).padStart(2, '0')} de {String(total).padStart(2, '0')}</div>
-        <div style={{ fontSize: 76, fontWeight: 700, color: BRAND.fg, lineHeight: 1.0 }}>{titulo}</div>
+        <div style={{ fontSize: compact ? 60 : 76, fontWeight: 700, color: BRAND.fg, lineHeight: 1.05 }}>{titulo}</div>
         {subtitulo && <div style={{ fontSize: 28, color: BRAND.body, lineHeight: 1.4, maxWidth: 620 }}>{subtitulo}</div>}
       </div>
     </div>
