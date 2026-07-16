@@ -190,6 +190,26 @@ function StudioApp() {
     });
     await refreshAssets();
   };
+  // TTS/arquivo definem só o áudio da cena (sem câmera) — a duração passa a ser a da fala.
+  const applySceneAudioOnly = async (sceneId, audio) => {
+    commit({
+      ...cfgRef.current,
+      scenes: cfgRef.current.scenes.map((s) => {
+        if (s.id !== sceneId) return s;
+        const { camera, ...rest } = s;
+        return { ...rest, audio };
+      }),
+    });
+    await refreshAssets();
+  };
+  const ttsForScene = async (scene) => {
+    const text = (scene.roteiro || '').replace(/\n/g, ' ').trim();
+    if (!text) throw new Error('preencha o roteiro da cena para gerar por TTS');
+    await applySceneAudioOnly(scene.id, await Store.sceneAudioFromTTS(slug, scene, text));
+  };
+  const fileForScene = async (scene, file) => {
+    await applySceneAudioOnly(scene.id, await Store.sceneAudioFromFile(slug, scene, file));
+  };
   const removeSceneAudio = (sceneId) => {
     commit({ ...cfg, scenes: cfg.scenes.map((s) => { if (s.id !== sceneId) return s; const { audio, camera, ...rest } = s; return rest; }) });
   };
@@ -331,9 +351,9 @@ function StudioApp() {
       {selection.kind === 'intro' && <IntroInspector cfg={cfg} patchIntro={patchIntro} />}
       {selection.kind === 'outro' && <OutroInspector cfg={cfg} assets={assets} patchOutro={patchOutro} />}
       {selection.kind === 'scene' && (
-        <SceneInspector slug={slug} cfg={cfg} index={selection.index} assets={assets} assetUrl={assetUrl} catalog={catalog}
+        <SceneInspector slug={slug} cfg={cfg} index={selection.index} assets={assets} assetUrl={assetUrl} catalog={catalog} online={!!online}
           patchScene={patchScene} onMove={moveScene} onRemove={removeScene}
-          onTake={takeForScene} onRemoveAudio={removeSceneAudio} onRemoveCamera={removeSceneCamera} />
+          onTake={takeForScene} onTakeTTS={ttsForScene} onTakeFile={fileForScene} onRemoveAudio={removeSceneAudio} onRemoveCamera={removeSceneCamera} />
       )}
       {selection.kind !== 'project' && (
         <div style={{ padding: '0 14px 18px' }}>
@@ -377,8 +397,8 @@ function StudioApp() {
       <div className={narrow ? 'narrow-wrap' : 'nle'}>
         {topbar}
         {narrow
-          ? <div className="narrow-body"><ReelEditor slug={slug} cfg={cfg} nonce={nonce} online={!!online} patch={patchCfg} narrow onOpenPreview={() => setOverlay('preview')} /></div>
-          : <ReelEditor slug={slug} cfg={cfg} nonce={nonce} online={!!online} patch={patchCfg} />}
+          ? <div className="narrow-body"><ReelEditor slug={slug} cfg={cfg} nonce={nonce} online={!!online} patch={patchCfg} assetUrl={assetUrl} narrow onOpenPreview={() => setOverlay('preview')} /></div>
+          : <ReelEditor slug={slug} cfg={cfg} nonce={nonce} online={!!online} patch={patchCfg} assetUrl={assetUrl} />}
         {narrow && overlay === 'preview' && (
           <div className="fs-overlay">
             <div className="fs-head"><span>preview</span><div className="grow" /><button className="btn sm" onClick={() => setOverlay(null)}>fechar</button></div>
