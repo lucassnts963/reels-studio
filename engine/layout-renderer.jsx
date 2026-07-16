@@ -21,6 +21,20 @@ function _tok(v) {
   return v.replace(/\$([a-zA-Z_]\w*)/g, (m, name) => (BRAND[name] != null ? BRAND[name] : m));
 }
 
+// Avalia a condição de `if:` de um nó. Formas aceitas:
+//   "campo"            -> verdadeiro se scene[campo] for truthy (comportamento antigo)
+//   "campo==valor"     -> igualdade (string) com o valor da cena
+//   "campo!=valor"     -> diferença
+// Permite molduras condicionais (ex.: telefone vs navegador) num só template.
+function evalIf(cond, scene) {
+  const m = String(cond).match(/^\s*([\w.-]+)\s*(==|!=)\s*(.*?)\s*$/);
+  if (m) {
+    const eq = String(scene[m[1]] == null ? '' : scene[m[1]]) === m[3];
+    return m[2] === '==' ? eq : !eq;
+  }
+  return !!scene[String(cond).trim()];
+}
+
 // Substitui {campo} e {campo|fallback} pelo valor da cena.
 function resolveText(str, scene) {
   if (str == null) return '';
@@ -87,7 +101,7 @@ function boxStyle(node) {
 function LayoutNode({ node, scene, start, end }) {
   const sprite = useSprite(); // sempre chamado (regra dos hooks), mesmo se não animar
   if (!node || typeof node !== 'object') return null;
-  if (node.if && !scene[node.if]) return null;
+  if (node.if && !evalIf(node.if, scene)) return null;
 
   const entry = entryStyle(node.anim, sprite);
   const box = boxStyle(node);
@@ -168,4 +182,4 @@ function SceneRenderer({ layout, scene, start, end }) {
   );
 }
 
-Object.assign(window, { SceneRenderer, LayoutNode, resolveText, resolveStyle });
+Object.assign(window, { SceneRenderer, LayoutNode, resolveText, resolveStyle, evalIf });

@@ -343,7 +343,12 @@ function SceneField({ field: f, value, onChange, assets }) {
   if (f.type === 'number') return <NumField label={label} value={value} step={f.step || 0.1} onChange={(v) => onChange(v === '' ? undefined : v)} />;
   if (f.type === 'check') return <label className="check"><input type="checkbox" checked={!!value} onChange={(e) => onChange(e.target.checked)} /> {label}</label>;
   if (f.type === 'select') return <SelectField label={label} value={value} options={(f.options || []).map(o => Array.isArray(o) ? o : [o, o])} onChange={onChange} />;
-  if (f.type === 'asset') return <AssetSelect label={label} value={value} options={(f.kind === 'print' ? assets.prints : assets.gravacoes) || []} onChange={onChange} />;
+  if (f.type === 'asset') {
+    const opts = f.kind === 'media' ? [...(assets.prints || []), ...(assets.gravacoes || [])]
+      : /print/.test(f.kind || '') ? (assets.prints || [])
+      : (assets.gravacoes || []);
+    return <AssetSelect label={label} value={value} options={opts} onChange={onChange} />;
+  }
   if (f.type === 'group') {
     const g = value || {};
     return <F label={label}><div className="row">{(f.fields || []).map(sf => (
