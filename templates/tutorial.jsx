@@ -74,7 +74,23 @@ function TutorialScene({ scene, start, end }) {
     );
   }
   if (scene.type === 'passo') {
-    return <Sprite start={start} end={end}><StepCard numero={scene.numero} total={scene.total} titulo={scene.titulo} subtitulo={scene.subtitulo} /></Sprite>;
+    // mídia opcional à direita (print ou vídeo) enquanto o passo é explicado.
+    // Sem scene.src, o cartão fica idêntico ao de antes.
+    const stepBox = { x: 1120, y: 200, width: 680, height: 680 };
+    return (
+      <Sprite start={start} end={end}>
+        <StepCard numero={scene.numero} total={scene.total} titulo={scene.titulo} subtitulo={scene.subtitulo} compact={!!scene.src} />
+        {scene.src && (
+          <div style={{ position: 'absolute', left: stepBox.x, top: stepBox.y, width: stepBox.width, height: stepBox.height,
+            borderRadius: 20, overflow: 'hidden', background: BRAND.card, border: '1px solid rgba(255,255,255,.10)', boxShadow: '0 40px 100px rgba(0,0,0,.55)' }}>
+            {scene.midia === 'video'
+              ? <VideoSprite src={abs(scene.src)} start={start} end={end} trimStart={scene.trimStart || 0} loop
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+              : <ImageSprite src={abs(scene.src)} x={0} y={0} width={stepBox.width} height={stepBox.height} fit="contain" radius={0} kenBurns={!!scene.kenBurns} />}
+          </div>
+        )}
+      </Sprite>
+    );
   }
   if (scene.type === 'codigo') {
     return <Sprite start={start} end={end}><TerminalCard titulo={scene.titulo} linhas={scene.linhas || []} caption={scene.caption} /></Sprite>;
