@@ -10,6 +10,13 @@ fields:
   - { name: titulo, label: "título", type: text, default: "Título do passo" }
   - { name: subtitulo, label: "subtítulo", type: text }
   - { name: src, label: "mídia à direita (opcional: print ou vídeo)", type: asset, kind: media }
+  - name: dispositivo
+    label: "moldura da mídia (se houver)"
+    type: select
+    default: celular
+    options:
+      - [celular, "Celular (moldura de telefone)"]
+      - [pc, "PC (janela de navegador)"]
   - name: midia
     label: "tipo da mídia (se houver)"
     type: select
@@ -17,3 +24,4 @@ fields:
     options:
       - [imagem, "Imagem (print)"]
       - [video, "Vídeo (gravação)"]
+  - { name: url, label: "URL na barra (só PC, decorativa)", type: text, mono: true }
