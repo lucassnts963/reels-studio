@@ -441,6 +441,28 @@ async function handleApi(req, res, url) {
       return sendJson(res, 200, { ok: true, ...audio });
     } catch (e) { return sendJson(res, 500, { error: String(e.message || e) }); }
   }
+  // clipe de voz COMPARTILHADO (voz/<name>.m4a), reutilizado entre projetos.
+  // GET status; POST tts (gera por texto); PUT (sobe um áudio gravado -> limpa).
+  if ((r = m(/^\/api\/voz\/([a-z0-9-]+)$/i)) && req.method === 'GET') {
+    const f = path.join(VOZ, r[1] + '.m4a');
+    if (!fs.existsSync(f)) return sendJson(res, 200, { exists: false });
+    const duracaoSegundos = +(await probeDuration(path.join(ROOT, 'tools', 'ffmpeg.exe'), f)).toFixed(2);
+    return sendJson(res, 200, { exists: true, src: 'voz/' + r[1] + '.m4a', duracaoSegundos });
+  }
+  if ((r = m(/^\/api\/tts-shared\/([a-z0-9-]+)$/i)) && req.method === 'POST') {
+    const name = r[1];
+    try {
+      const b = JSON.parse((await readBody(req)).toString('utf8') || '{}');
+      return sendJson(res, 200, { ok: true, ...(await ttsToShared(name, b.text || '', { provider: b.provider, voice: b.voice, model: b.model })) });
+    } catch (e) { return sendJson(res, 500, { error: String(e.message || e) }); }
+  }
+  if ((r = m(/^\/api\/voz\/([a-z0-9-]+)\/([^/]+)$/i)) && req.method === 'PUT') {
+    const name = r[1], ext = path.extname(path.basename(decodeURIComponent(r[2]))).toLowerCase();
+    if (!/^\.(wav|mp3|m4a|aac|ogg|webm)$/i.test(ext)) return sendJson(res, 400, { error: 'extensão não aceita' });
+    try { return sendJson(res, 200, { ok: true, ...(await cleanSharedFromRaw(name, await readBody(req), ext)) }); }
+    catch (e) { return sendJson(res, 500, { error: String(e.message || e) }); }
+  }
+
   // lista as vozes de um provedor (ElevenLabs precisa da env; OpenAI é fixo).
   if (url.pathname === '/api/voices' && req.method === 'GET') {
     try { return sendJson(res, 200, await listVoices(url.searchParams.get('provider') || 'elevenlabs')); }
@@ -1007,6 +1029,20 @@ async function ttsToShared(name, text, override = {}) {
   fs.writeFileSync(rawMp3, await synthesizeTTS(text, opts));
   await run(ffmpegPath, ['-y', '-i', rawMp3, '-vn', '-af', NARRACAO_AF, '-c:a', 'aac', '-b:a', '192k', out]);
   fs.unlinkSync(rawMp3);
+  const duracaoSegundos = +(await probeDuration(ffmpegPath, out)).toFixed(2);
+  return { src: 'voz/' + name + '.m4a', duracaoSegundos };
+}
+
+// Grava um clipe COMPARTILHADO a partir de um áudio GRAVADO (blob cru) — limpa e
+// mede, como a narração. Usado quando o usuário grava a própria voz pro CTA.
+async function cleanSharedFromRaw(name, rawBuffer, ext) {
+  const ffmpegPath = path.join(ROOT, 'tools', 'ffmpeg.exe');
+  fs.mkdirSync(VOZ, { recursive: true });
+  const raw = path.join(VOZ, name + '.raw' + (ext || '.webm'));
+  fs.writeFileSync(raw, rawBuffer);
+  const out = path.join(VOZ, name + '.m4a');
+  await run(ffmpegPath, ['-y', '-i', raw, '-vn', '-af', NARRACAO_AF, '-c:a', 'aac', '-b:a', '192k', out]);
+  try { fs.unlinkSync(raw); } catch {}
   const duracaoSegundos = +(await probeDuration(ffmpegPath, out)).toFixed(2);
   return { src: 'voz/' + name + '.m4a', duracaoSegundos };
 }

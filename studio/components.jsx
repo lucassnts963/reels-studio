@@ -1297,6 +1297,53 @@ function NarracaoQuiz({ slug, cfg, online, patch }) {
   );
 }
 
+// Áudio de CTA COMPARTILHADO (voz/cta.m4a) — reutilizado por todos os quizzes.
+// Padrão gerado por TTS; dá pra regerar com outro texto ou gravar a própria voz.
+function CtaAudio({ online }) {
+  const [info, setInfo] = React.useState(null);
+  const [text, setText] = React.useState('Acertou? Comenta aí.');
+  const [busy, setBusy] = React.useState('');
+  const [err, setErr] = React.useState('');
+  const load = React.useCallback(() => { fetch('/api/voz/cta').then((r) => r.json()).then(setInfo).catch(() => setInfo({ exists: false })); }, []);
+  React.useEffect(() => { if (online) load(); }, [online, load]);
+
+  const rec = useTakeRecorder({ onUse: async (blob) => {
+    const put = await fetch('/api/voz/cta/cta.webm', { method: 'PUT', body: blob });
+    if (!put.ok) throw new Error((await put.json().catch(() => ({}))).error || 'falha ao enviar');
+    load();
+  } });
+  const gerarTTS = async () => {
+    setBusy('tts'); setErr('');
+    try {
+      const r = await fetch('/api/tts-shared/cta', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text }) });
+      const b = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(b.error || 'falha no TTS');
+      load();
+    } catch (e) { setErr(String(e.message || e)); } finally { setBusy(''); }
+  };
+
+  if (!online) return <div className="hint">o áudio do CTA fica disponível conectado ao PC.</div>;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="hint"><b>Compartilhado por todos os quizzes</b> — toca no fim de cada vídeo. Se mudar a frase, regere (TTS) ou grave a sua voz.</div>
+      {info?.exists
+        ? <div className="row" style={{ alignItems: 'center' }}><audio controls src={`/${info.src}?v=${info.duracaoSegundos}`} style={{ flex: 1, height: 32 }} /><span className="hint" style={{ flex: 'none' }}>{fmtSecs(info.duracaoSegundos)}</span></div>
+        : <div className="hint">nenhum áudio de CTA ainda.</div>}
+      <div className="row">
+        <input type="text" value={text} onChange={(e) => setText(e.target.value)} placeholder="texto do CTA" />
+        <button className="btn sm" style={{ flex: 'none' }} disabled={!!busy || !text.trim()} onClick={gerarTTS}>{busy === 'tts' ? 'gerando…' : 'gerar (TTS)'}</button>
+      </div>
+      <div className="row">
+        {rec.state === 'idle' && <button className="btn sm" onClick={rec.start}>● gravar minha voz</button>}
+        {rec.state === 'recording' && <><span className="rec-status"><span className="live">●</span> {fmtSecs(rec.secs)}</span><button className="btn sm" onClick={rec.stop}>parar</button></>}
+        {rec.state === 'review' && <><audio controls src={rec.reviewUrl} style={{ flex: 1, height: 32 }} /><button className="btn sm primary" style={{ flex: 'none' }} onClick={rec.use}>usar</button><button className="btn sm" style={{ flex: 'none' }} onClick={rec.discard}>descartar</button></>}
+        {rec.state === 'busy' && <span className="hint">processando…</span>}
+      </div>
+      {(err || rec.err) && <div className="warn-chip" title={err || rec.err}>✗ {(err || rec.err).slice(0, 70)}</div>}
+    </div>
+  );
+}
+
 function QuizEditor({ cfg, patch, slug, online }) {
   const options = cfg.options || [];
   const setCorrect = (idx) => patch({ options: options.map((o, i) => ({ ...o, correct: i === idx })) });
@@ -1331,6 +1378,7 @@ function QuizEditor({ cfg, patch, slug, online }) {
         <TextField label="CTA titulo" value={cfg.ctaTitle} onChange={(v) => patch({ ctaTitle: v })} />
         <TextField label="handle (rodape)" value={cfg.handleSub} onChange={(v) => patch({ handleSub: v })} />
       </Group>
+      <Group title="CTA (áudio)"><CtaAudio online={online} /></Group>
     </React.Fragment>
   );
 }
